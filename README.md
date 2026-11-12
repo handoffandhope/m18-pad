@@ -27,14 +27,17 @@ creatures and all, and the ice thins as the reset gets closer.
 After 21:00 the tank goes dark and the lamp in the corner is what is left. The creatures glow
 faintly, so you can still see who is moving.
 
-## A city, built by the cheapest model in three minutes
+## A city where every tower is a gauge
 
-![A night skyline across the keys. Windows light up, cars pass, the moon crosses the top row and the ring fills cyan.](gallery/city.gif)
+![Five towers, one per column of keys. Their floors light up from the street, a clock tower shows the time, cars pass and the moon crosses behind the bars.](gallery/city.gif)
 
-The windows light up with CPU load. Traffic follows your network, the moon crosses the top row once
-a day, and it rains when memory runs above 80%. Tap a building and it shows the number behind it.
-Claude Haiku 5.5 wrote this from one paragraph and a one-page manual. The
-[prompt, the file it wrote and what it cost](gallery/city/) are all here.
+Five towers, one per column of keys, and the bars between the screens are the alleys between them.
+Each tower's floors light up from the street with its own number: CPU, memory, network, disk. The
+fifth is a clock tower. Traffic follows your network, the moon crosses behind the towers once a day,
+and it rains when memory is tight. Tap a tower and it shows the number.
+
+Claude Haiku 5.5 wrote the first version of this city in under three minutes from one paragraph and
+a one-page manual. The [prompt, the file it wrote and what it cost](gallery/city/) are all here.
 
 ## It does not have to be pixel art
 

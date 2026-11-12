@@ -224,11 +224,12 @@ def night(t, film):
 
 
 def city(t, film):
-    """A day in ten seconds: the moon crosses, load lights the windows, the network is the traffic, memory is the rain."""
+    """A day in ten seconds: each tower fills with its own signal, the moon and sun cross behind the bars."""
     a = max(0.0, t) / 10.0
-    cpu, net, ram = 0.15 + 0.8 * (0.5 - 0.5 * math.cos(a * 2 * math.pi)), 0.3 + 0.6 * abs(math.sin(a * 5)), 0.4 + 0.58 * a
-    film.pin(time_of_day=(0.32 + 0.66 * a) % 1.0, cpu=cpu, net=net, ram=ram, disk=0.5)
-    return f"CPU {cpu * 100:.0f}%   network {net * 100:.0f}%   memory {ram * 100:.0f}%"
+    cpu, net = 0.15 + 0.8 * (0.5 - 0.5 * math.cos(a * 2 * math.pi)), 0.3 + 0.6 * abs(math.sin(a * 5))
+    ram, disk = 0.35 + 0.6 * a, 0.62
+    film.pin(time_of_day=(0.80 + 0.5 * a) % 1.0, cpu=cpu, net=net, ram=ram, disk=disk)
+    return f"CPU {cpu * 100:.0f}%   memory {ram * 100:.0f}%   network {net * 100:.0f}%   disk {disk * 100:.0f}%"
 
 
 def marbles(t, film):
@@ -244,7 +245,7 @@ CLIPS = {
     "tank": lambda: record(ROOT / "gallery" / "tank.gif", Film("fishbowl", FIX), tank, 13, warm=25, width=720),
     "limit": lambda: record(ROOT / "gallery" / "limit.gif", Film("fishbowl", FIX), limit, 9, warm=25, width=720),
     "night": lambda: record(ROOT / "gallery" / "night.gif", Film("fishbowl", FIX), night, 7, warm=25, width=720),
-    "city": lambda: record(ROOT / "gallery" / "city.gif", Film("city_haiku", source=ROOT / "gallery" / "city" / "city.py"), city, 10, fps=10, warm=3, width=720),
+    "city": lambda: record(ROOT / "gallery" / "city.gif", Film("city"), city, 10, fps=10, warm=3, width=720),
 }
 
 if __name__ == "__main__":
