@@ -1,0 +1,69 @@
+# M18 macro pad config: the fish tank as the home page (references/fishbowl.md, "Page mode").
+# Keys 1-15 are the LCD keys, row-major (1-5 top row, 6-10 middle, 11-15 bottom).
+# b1 b2 b3 (or 16 17 18) are the three physical buttons below the screen.
+# Full schema: references/config.md in the m18-macropad skill.
+#
+# main: one tank seen through 15 windows. Every key is `live: fishbowl.tile`; four of them carry a fixture
+# (its art sits on the water and keeps its own action):
+#    1 lamp   = Lights (all lights off; this key stays faint as a bulb, press again to wake)
+#    5 buoy   = Scrawl (the red record float)
+#   11 filter = PC resources: CPU / RAM / GPU levels with numbers; bubbles pour out under load; tap = Task Manager
+#   15 chest  = cards: shut at zero, open with the count when there are cards; tap = the card takeover
+# The other 11 keys are water: tap a creature = its name plate, tap again = open its session; hold = nudge it.
+# Hold on empty water = every agent that has posted (agents.deck). Everything moved off main is on tools (b2).
+
+settings:
+  key_map: {1: 11, 2: 12, 3: 13, 4: 14, 5: 15, 11: 1, 12: 2, 13: 3, 14: 4, 15: 5}  # SDK reports rows bottom-up
+  home: main
+  brightness: 70
+  theme: {name: hillside}
+  rgb: {color: "#4caf2a", brightness: 60}   # hillside grass (vaporjazz: #ff4fa0, wabisabi: #c4682f)
+  hold_ms: 450            # press longer than this triggers a key's `hold` action
+  follow_focus: true      # pages with `follow: [app.exe]` auto-open when that app is focused
+  log_raw: true           # append device events to raw-events.log (duplicate-press check)
+
+pages:
+  main:
+    keys:
+      # --- fixtures: tank equipment that is also a key ---
+      1: {icon: "mdi:lightbulb-outline", live: {plugin: fishbowl.tile, interval: 1, args: {fixture: lamp}}, action: {dark: toggle}, comment: "Lights: all lights off; the bulb stays faint, press again to wake"}
+      5: {live: {plugin: fishbowl.tile, interval: 1, args: {fixture: buoy}}, action: {plugin: scrawl.record}, comment: "Scrawl: start / stop a capture (Alt+Shift+S); starts the app first when it is not running"}
+      11: {live: {plugin: fishbowl.tile, interval: 1, args: {fixture: gauge}}, action: {hotkey: ctrl+shift+esc}, comment: "CPU/RAM/GPU; tap = Task Manager"}
+      15: {live: {plugin: fishbowl.tile, interval: 1, args: {fixture: chest}}, action: {plugin: cards.open}, comment: "card key: shut chest at zero cards; press = takeover with the card's detail and actions (clips, stale tabs)"}
+      # --- water: tap = name plate, tap again = open the session; hold = nudge (empty water: agents.deck) ---
+      2: {live: {plugin: fishbowl.tile, interval: 1}, action: {plugin: fishbowl.tap}, hold: {plugin: fishbowl.hold}}
+      3: {live: {plugin: fishbowl.tile, interval: 1}, action: {plugin: fishbowl.tap}, hold: {plugin: fishbowl.hold}}
+      4: {live: {plugin: fishbowl.tile, interval: 1}, action: {plugin: fishbowl.tap}, hold: {plugin: fishbowl.hold}}
+      6: {live: {plugin: fishbowl.tile, interval: 1}, action: {plugin: fishbowl.tap}, hold: {plugin: fishbowl.hold}}
+      7: {live: {plugin: fishbowl.tile, interval: 1}, action: {plugin: fishbowl.tap}, hold: {plugin: fishbowl.hold}}
+      8: {live: {plugin: fishbowl.tile, interval: 1}, action: {plugin: fishbowl.tap}, hold: {plugin: fishbowl.hold}}
+      9: {live: {plugin: fishbowl.tile, interval: 1}, action: {plugin: fishbowl.tap}, hold: {plugin: fishbowl.hold}}
+      10: {live: {plugin: fishbowl.tile, interval: 1}, action: {plugin: fishbowl.tap}, hold: {plugin: fishbowl.hold}}
+      12: {live: {plugin: fishbowl.tile, interval: 1}, action: {plugin: fishbowl.tap}, hold: {plugin: fishbowl.hold}}
+      13: {live: {plugin: fishbowl.tile, interval: 1}, action: {plugin: fishbowl.tap}, hold: {plugin: fishbowl.hold}}
+      14: {live: {plugin: fishbowl.tile, interval: 1}, action: {plugin: fishbowl.tap}, hold: {plugin: fishbowl.hold}}
+      b1: {label: Home, action: {page: home}}
+      b2: {label: Tools, action: {page: tools}}
+      b3: {label: Dim, action: {brightness: "-20"}, hold: {brightness: 80}}
+
+  tools:                    # middle button opens this page; middle button again goes back. Does not inherit main.
+    keys:
+      # text size: sent to whichever app has focus (browsers, editors, terminals, the Claude app)
+      1: {icon: mdi:format-font-size-decrease, label: Text -, action: {hotkey: ctrl+minus}}
+      2: {icon: mdi:format-font-size-increase, label: Text +, action: {hotkey: ctrl+equals}}
+      3: {live: {plugin: nightshift.face, interval: 2}, action: {plugin: nightshift.tap}, hold: {plugin: nightshift.hold}, comment: "tap = away / back (keeps the PC awake, counts what agents finish); hold = also monitors off"}
+      4: {live: {plugin: claude_limit.face, interval: 5}, action: {plugin: claude_limit.ring}, hold: {plugin: claude_limit.resume}, comment: "Claude 5-hour and weekly use (estimate), countdown after a limit hit; hold after reset = continue text on clipboard + open the session"}
+      5: {live: {plugin: layout.face, interval: 2}, action: {plugin: layout.spread}, hold: {plugin: layout.open}, comment: "agent windows per monitor; tap = spread over side monitors, hold = pick mode / undo"}
+      6: {icon: mdi:timer-3, label: Snip 3s, action: [{countdown: 3}, {hotkey: win+shift+s}]}
+      7: {icon: mdi:monitor-cellphone, label: Projects, action: {open: "https://example.com/"}}
+      8: {live: {plugin: ring.codex_face, interval: 30}, action: {plugin: ring.codex_meter}, comment: "Codex limit used, as of its last turn; tap shows it on the ring"}
+      9: {icon: mdi:play-pause, label: Play, action: {media: play_pause}}
+      10: {icon: mdi:skip-next, label: Next, action: {media: next}, hold: {media: prev}, comment: "hold = previous track"}
+      11: {live: {plugin: clip.status, interval: 3}, action: {plugin: clip.save}, hold: {plugin: clip.pick}, comment: "first tap arms OBS (Pad Clips profile); tap = save the last 30 s as a card on the chest; hold = pick which monitor is buffered"}
+      12: {live: {plugin: clipboard.face, interval: 1}, action: {plugin: clipboard.open}, comment: "what is on the clipboard; press = recent clips + paste as plain text"}
+      13: {icon: mdi:microphone, label: Discord, live: {plugin: discord_voice.status, interval: 1}, action: {plugin: discord_voice.toggle_mute}, hold: {plugin: discord_voice.toggle_deaf}, comment: "needs plugins/discord.json, see discord_voice.py"}
+      14: {icon: mdi:volume-minus, label: Vol -, action: {media: vol_down}, hold: {plugin: mixer.open}, comment: "hold = mixer over the whole pad"}
+      15: {icon: mdi:volume-plus, label: Vol +, action: {media: vol_up}, hold: {media: mute}}
+      b1: {label: Home, action: {page: home}}
+      b2: {label: Back, action: {page: back}}
+      b3: {label: Dim, action: {brightness: "-20"}, hold: {brightness: 80}}

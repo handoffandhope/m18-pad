@@ -1,0 +1,15 @@
+M18 macro pad skill - install (Windows, PowerShell):
+
+The skill lives in ~/.agents/skills/m18-macropad and is junctioned into ~/.claude/skills/m18-macropad
+(shared with Codex). Edit it in ~/.agents/skills; don't touch the junction.
+
+1. Make Claude Code see the skill (once):
+     New-Item -ItemType Junction -Path $env:USERPROFILE\.claude\skills\m18-macropad -Target $env:USERPROFILE\.agents\skills\m18-macropad
+2. When the pad is plugged in, quit VSD Craft (tray > Exit), then:
+     powershell -ExecutionPolicy Bypass -File $env:USERPROFILE\.agents\skills\m18-macropad\scripts\setup.ps1
+     $env:USERPROFILE\tools\m18\m18ctl.cmd doctor
+     $env:USERPROFILE\tools\m18\m18ctl.cmd start
+     $env:USERPROFILE\tools\m18\m18ctl.cmd identify
+Or just tell Claude Code: "set up my m18 using the m18-macropad skill".
+After editing daemon code in the skill, rerun setup.ps1 (it keeps macros.yaml and plugins), then
+m18ctl stop and m18ctl start.

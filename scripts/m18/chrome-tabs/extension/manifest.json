@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "M18 Stale Tabs",
+  "version": "0.1.0",
+  "description": "Shows long-open tabs as cards on the M18 macro pad (Keep / Close / Later / Skip). Reads only tab titles and URLs; never page content.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0Tf+sbD5J6mJEvoqu79cmf+7L52haRNEu0md8PTBKETrYyrOMj9kNdJODc81lGbgbLYvLaR9ky6GBGd/mC3SCkds44yzZfW0rAWj3hWxYiJLDOJ9u2pAbN3/3KYPoqei9iyqyePEZxsIPyc3P6iZyC30lLw9SP3dCuLrVuAMGLET9TSHwnDx9LuYSaoOa+b3GSr9zzpNVM+W3K2pW4AaxcpqB/60VGAQyG89UbQFtdjvvI+Xo/G/k3BlODZWC0pTQKJRMW7LR2UHtbm4ikHifAHY7Chug3+h4pZkP7DNFh6xIur1SnQJABW7SdUX0F4eg5EY5cdtsXso2ZlwQVVqAQIDAQAB",
+  "minimum_chrome_version": "121",
+  "permissions": ["tabs", "storage", "alarms", "nativeMessaging", "favicon", "readingList", "sessions"],
+  "optional_permissions": ["bookmarks"],
+  "incognito": "not_allowed",
+  "background": { "service_worker": "background.js", "type": "module" }
+}

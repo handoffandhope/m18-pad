@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="panel-token" content="{{TOKEN}}">
+<title>M18 Panel</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="dot" id="dot" title="daemon"></span>M18</div>
+  <nav class="pages" id="pages" aria-label="Pages"></nav>
+  <button class="ghost" id="undo" hidden>Undo</button>
+</header>
+
+<main class="layout">
+  <section class="padcol">
+    <div class="padwrap" id="padwrap">
+      <img id="pad" alt="The pad as it is now" width="792" height="650">
+      <div class="hits" id="hits"></div>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="card keyinfo" id="keyinfo">
+      <p class="muted">Tap a key to see what it does.</p>
+    </div>
+
+    <form class="card ask" id="ask" autocomplete="off">
+      <textarea id="asktext" rows="3" maxlength="2000" placeholder="Make key 4 open my bank’s site…" aria-label="Request"></textarea>
+      <div class="row">
+        <span class="muted small" id="askstate"></span>
+        <button type="button" class="ghost" id="stop" hidden>Stop</button>
+        <button type="submit" class="primary" id="go">Ask</button>
+      </div>
+      <ol class="progress" id="progress" hidden></ol>
+      <div class="result" id="result" hidden></div>
+    </form>
+  </aside>
+</main>
+
+<section class="sets">
+  <div class="sethead">
+    <h2>Sets</h2>
+    <div class="themes" id="themes" role="group" aria-label="Theme"></div>
+  </div>
+  <div class="setgrid" id="sets"></div>
+</section>
+
+<div class="toast" id="toast" role="status" hidden></div>
+<script src="/app.js"></script>
+</body>
+</html>

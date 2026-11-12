@@ -1,0 +1,27 @@
+# Button set "media": playback and volume up front, the volume mixer one tap away.
+
+settings:
+  key_map: {1: 11, 2: 12, 3: 13, 4: 14, 5: 15, 11: 1, 12: 2, 13: 3, 14: 4, 15: 5}  # SDK reports rows bottom-up
+  home: main
+  brightness: 70
+  theme: {name: hillside}
+  rgb: {color: "#4caf2a", brightness: 60}
+  hold_ms: 450
+  follow_focus: true
+
+pages:
+  main:
+    keys:
+      1: {icon: mdi:skip-previous, label: Prev, action: {media: prev}}
+      2: {icon: mdi:play-pause, label: Play, action: {media: play_pause}}
+      3: {icon: mdi:skip-next, label: Next, action: {media: next}}
+      4: {icon: mdi:stop, label: Stop, action: {media: stop}}
+      5: {icon: mdi:volume-mute, label: Mute, action: {media: mute}}
+      6: {icon: mdi:volume-minus, label: Vol -, action: {media: vol_down}, hold: {plugin: mixer.open}}
+      7: {icon: mdi:volume-plus, label: Vol +, action: {media: vol_up}, hold: {media: mute}}
+      8: {icon: mdi:tune-vertical, label: Mixer, action: {plugin: mixer.open}, comment: "per-app volume over the whole pad"}
+      10: {live: {plugin: sysstats.tile, interval: 1.5}, action: {hotkey: ctrl+shift+esc}, comment: "CPU/RAM/GPU; tap = Task Manager"}
+      15: {icon: mdi:power, label: Lights, action: {dark: toggle}}
+      b1: {label: Home, action: {page: home}}
+      b2: {label: Play, action: {media: play_pause}}
+      b3: {label: Dim, action: {brightness: "-20"}, hold: {brightness: 80}}

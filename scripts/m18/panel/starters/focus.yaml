@@ -1,0 +1,31 @@
+# Button set "focus": the agent sessions get most of the pad, everything else is quiet.
+# Ten session slots (keys 1-10; slot 9 turns into "+N" on overflow), the session-count tile, Lights.
+# Keys 11, 12 and 14 are left blank on purpose.
+
+settings:
+  key_map: {1: 11, 2: 12, 3: 13, 4: 14, 5: 15, 11: 1, 12: 2, 13: 3, 14: 4, 15: 5}  # SDK reports rows bottom-up
+  home: main
+  brightness: 70
+  theme: {name: hillside}
+  rgb: {color: "#4caf2a", brightness: 60}
+  hold_ms: 450
+  follow_focus: true
+
+pages:
+  main:
+    keys:
+      1: {live: {plugin: sessions.slot, interval: 1, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 0}}, action: {plugin: sessions.press, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 0}}}
+      2: {live: {plugin: sessions.slot, interval: 1, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 1}}, action: {plugin: sessions.press, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 1}}}
+      3: {live: {plugin: sessions.slot, interval: 1, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 2}}, action: {plugin: sessions.press, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 2}}}
+      4: {live: {plugin: sessions.slot, interval: 1, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 3}}, action: {plugin: sessions.press, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 3}}}
+      5: {live: {plugin: sessions.slot, interval: 1, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 4}}, action: {plugin: sessions.press, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 4}}}
+      6: {live: {plugin: sessions.slot, interval: 1, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 5}}, action: {plugin: sessions.press, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 5}}}
+      7: {live: {plugin: sessions.slot, interval: 1, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 6}}, action: {plugin: sessions.press, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 6}}}
+      8: {live: {plugin: sessions.slot, interval: 1, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 7}}, action: {plugin: sessions.press, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 7}}}
+      9: {live: {plugin: sessions.slot, interval: 1, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 8}}, action: {plugin: sessions.press, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 8}}}
+      10: {live: {plugin: sessions.slot, interval: 1, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 9}}, action: {plugin: sessions.press, args: {zone: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], slot: 9}}}
+      13: {live: {plugin: ring.status, interval: 5}, comment: "working/waiting/finished counts; also drives the LED ring arcs"}
+      15: {icon: mdi:power, label: Lights, action: {dark: toggle}}
+      b1: {label: Home, action: {page: home}}
+      b2: {label: Play, action: {media: play_pause}}
+      b3: {label: Dim, action: {brightness: "-20"}, hold: {brightness: 80}}

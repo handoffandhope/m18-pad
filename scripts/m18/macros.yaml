@@ -1,0 +1,31 @@
+# M18 macro pad config — edited by you or an agent; the daemon reloads on save.
+# Keys 1-15 are the LCD keys, row-major (1-5 top row, 6-10 middle, 11-15 bottom).
+# b1 b2 b3 (or 16 17 18) are the three physical buttons below the screen.
+# Full schema: references/config.md in the m18-macropad skill.
+
+settings:
+  home: main
+  brightness: 70
+  rgb: {color: "#7c3aed", brightness: 60}
+  hold_ms: 450            # press longer than this triggers a key's `hold` action
+  follow_focus: true      # pages with `follow: [app.exe]` auto-open when that app is focused
+
+pages:
+  main:
+    keys:
+      # --- The user's keys ---
+      1: {icon: mdi:timer-3, label: Snip 3s, action: [{countdown: 3}, {hotkey: win+shift+s}]}
+      2: {live: {plugin: sysstats.tile, interval: 1.5}, action: {hotkey: ctrl+shift+esc}, comment: "CPU/RAM/GPU; tap = Task Manager"}
+      3: {icon: mdi:microphone, label: Discord, live: {plugin: discord_voice.status, interval: 1}, action: {plugin: discord_voice.toggle_mute}, hold: {plugin: discord_voice.toggle_deaf}, comment: "needs plugins/discord.json, see discord_voice.py"}
+      4: {icon: mdi:monitor-cellphone, label: Projects, action: {open: "https://example.com/"}}
+      # Scrawl: finds its Start Menu entry at press time. Swap in `run: "C:/path/Scrawl.exe"` once known.
+      5: {icon: mdi:record-rec, label: Scrawl, bg: "#8b1a1a", action: {shell: 'powershell -NoProfile -WindowStyle Hidden -Command "$a = Get-StartApps | Where-Object Name -like ''*Scrawl*'' | Select-Object -First 1; if ($a) { Start-Process (''shell:AppsFolder\'' + $a.AppID) }"'}}
+      # --- media row ---
+      11: {icon: mdi:skip-previous, label: Prev, action: {media: prev}}
+      12: {icon: mdi:play-pause, label: Play, action: {media: play_pause}}
+      13: {icon: mdi:skip-next, label: Next, action: {media: next}}
+      14: {icon: mdi:volume-minus, label: Vol -, action: {media: vol_down}}
+      15: {icon: mdi:volume-plus, label: Vol +, action: {media: vol_up}, hold: {media: mute}}
+      b1: {label: Home, action: {page: home}}
+      b2: {label: Back, action: {page: back}}
+      b3: {label: Dim, action: {brightness: "-20"}, hold: {brightness: 80}}
