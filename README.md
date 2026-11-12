@@ -27,14 +27,18 @@ creatures and all, and the ice thins as the reset gets closer.
 After 21:00 the tank goes dark and the lamp in the corner is what is left. The creatures glow
 faintly, so you can still see who is moving.
 
-## A city where every tower is a gauge
+## A city block where every building is a gauge
 
-![Five towers, one per column of keys. Their floors light up from the street, a clock tower shows the time, cars pass and the moon crosses behind the bars.](gallery/city.gif)
+![Five different buildings, one per column of keys: a power plant, apartments under a water tank, a telecom tower, a container yard and a clock tower. Dusk falls, windows light, cars pass.](gallery/city.gif)
 
-Five towers, one per column of keys, and the bars between the screens are the alleys between them.
-Each tower's floors light up from the street with its own number: CPU, memory, network, disk. The
-fifth is a clock tower. Traffic follows your network, the moon crosses behind the towers once a day,
-and it rains when memory is tight. Tap a tower and it shows the number.
+Five buildings, one per column of keys, and the bars between the screens are the alleys between them.
+Each one shows its number the way that building would. CPU is a power plant: the furnace arches glow
+hotter and the chimneys smoke harder. Memory is the water tank on the apartments' roof, and it drips
+when it is nearly full. Network is a telecom tower whose mast sends out more rings. Disk is a container
+yard where the stack grows toward the crane. The fifth is a clock tower, and its bell swings on the hour.
+
+At dusk the street lamps come on and people in the apartments switch their lights on at their own
+hours. There is a cat on the roof. Tap a building and it shows the number.
 
 Claude Haiku 5.5 wrote the first version of this city in under three minutes from one paragraph and
 a one-page manual. The [prompt, the file it wrote and what it cost](gallery/city/) are all here.
