@@ -29,20 +29,31 @@ faintly, so you can still see who is moving.
 
 ## A city through the window
 
-![A city district seen from about twenty floors up, through the pad's fifteen screens as window panes: a boulevard runs to a downtown skyline, a power plant smokes, containers fill a yard under a crane, and a cat watches from the sill.](gallery/city.gif)
+![A city district seen from about twenty floors up, through the pad's fifteen screens as window panes. Evening turns to night and the windows light up; at ten the view zooms in on the clock tower's face, then returns to fireworks over the skyline while a cat watches from the sill.](gallery/city.gif)
 
 The fifteen screens are panes of one window and the bars between them are its glazing bars. Nothing is
 lined up with them. You look out over a district from about twenty floors up, and towers, traffic and
 smoke pass behind the bars the way they do behind a real window.
 
-The view is your computer. The power plant on the right is the CPU: its furnace doors glow hotter and
-its chimneys smoke harder. Memory is the water tank on the roof across the way, and when it runs tight
-it rains and the drops run down the glass, pane by pane. Network is the traffic on the boulevard and the
-rings from the tower downtown. Disk is the container yard below, where painted bays fill up and then
-stack. The clock tower keeps the time, and pigeons leave it on the hour. The big wheel and the airship
-are there because a city has them.
+The view is your computer. The power plant on the right is the CPU: its furnace doors glow hotter, its
+roof fans spin faster and its chimneys smoke harder, and above 90 % they flare. Memory is the water
+tank on the roof across the way, and when it runs tight it rains and the drops run down the glass, pane
+by pane. Network is the traffic on the boulevard, the rings from the tower downtown and the speed of
+the searchlights. Disk is the container yard below, where a gantry crane sets a container down for
+every 5 %. The clock tower keeps the time, and the light, the sunlit side of every wall and the number
+of lit windows follow it. Pigeons leave the tower on the hour, and at night there are fireworks
+instead. A train crosses the viaduct, barges go down the river, and the big wheel and the airship are
+there because a city has them.
 
-A cat sits on the sill and watches the city. Tap a pane and it shows the number of what you see in it.
+![The same view by day. The CPU passes 85 %, the cat turns its head and the view zooms in on the power plant: flames behind the furnace doors, roof fans spinning, a plate reading CPU 95 %. A tap returns to the wide view; a tap on the yard zooms in on the gantry crane as it sets a container down.](gallery/city-zoom.gif)
+
+A cat sits on the sill, and it is the one who notices things. When the CPU passes 85 %, memory 90 % or
+network 80 %, when the hour strikes or the crane has a container to move, the cat turns its head and
+the view zooms in on what it is looking at, with the number on a plate. A zoom is the same picture
+through a longer lens, so things show up that are too small to draw from far away: the fire behind the
+furnace doors, the marks on the sight glass, the second hand of the clock, the ribs on the containers.
+Tap a pane to zoom in on what you see in it, and tap again to come back. Left alone, the view visits
+one place a minute (`tour: 0` in the page's options keeps it still).
 
 Claude Haiku 5.5 wrote the first version of this city in under three minutes from one paragraph and
 a one-page manual. The [prompt, the file it wrote and what it cost](gallery/city/) are all here.

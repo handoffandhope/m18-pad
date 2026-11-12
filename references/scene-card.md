@@ -118,9 +118,12 @@ goes the other way, so with a fixed camera you can sit a ball exactly in the mid
 Read one before you write. Your scene should hold up next to it in `--far`.
 
 - [scenes/city.py](../scripts/m18/scenes/city.py): *the bars are a frame.* One view through a window,
-  in perspective, nothing lined up with the keys. Every number has one big carrier (a 12 px sight
-  glass, a 32 px clock face, furnace doors, smoke, a yard of painted bays filling with containers), and the small things
-  (a turning wheel, a cat's ear twitch, pigeons on the hour) sit on top of shapes that read without them.
+  in perspective, nothing lined up with the keys. Every number has one big carrier (a 14 by 22 px
+  sight glass, a 32 px clock face, furnace doors, smoke, a yard of painted bays filling with
+  containers), and the small things (a turning wheel, a cat's ear twitch, pigeons on the hour) sit on
+  top of shapes that read without them. It also zooms: every place is drawn through a `View`, so a
+  close-up is the same picture through a longer lens, with the exact number on a plate. Detail too
+  small for the chair (flames, marks on the glass, a second hand) is only drawn when the lens is close.
 - [scenes/marbles.py](../scripts/m18/scenes/marbles.py): *one thing per key.* Fifteen marbles, one
   session each, state shown by motion, lift and glow.
 

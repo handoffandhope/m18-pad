@@ -223,13 +223,35 @@ def night(t, film):
     return f"{int(tod * 24):02d}:{int(tod * 1440) % 60:02d}"
 
 
+def _ease(x):
+    x = max(0.0, min(1.0, x))
+    return x * x * (3 - 2 * x)
+
+
 def city(t, film):
-    """A day in ten seconds: each tower fills with its own signal, the moon and sun cross behind the bars."""
-    a = max(0.0, t) / 10.0
-    cpu, net = 0.15 + 0.8 * (0.5 - 0.5 * math.cos(a * 2 * math.pi)), 0.3 + 0.6 * abs(math.sin(a * 5))
-    ram, disk = 0.35 + 0.6 * a, 0.62
-    film.pin(time_of_day=(0.80 + 0.5 * a) % 1.0, cpu=cpu, net=net, ram=ram, disk=disk)
-    return f"CPU {cpu * 100:.0f}%   memory {ram * 100:.0f}%   network {net * 100:.0f}%   disk {disk * 100:.0f}%"
+    """Half past five to ten at night in three seconds, the rain stopping on the way. Then ten strikes: the cat
+    looks at the clock, the view goes there, and a tap brings it back to the fireworks."""
+    u = max(0.0, t)
+    tod = 0.729 + (22 / 24 - 0.729) * _ease(u / 3.5) + max(0.0, u - 3.5) / 86400
+    cpu, net = 0.45 + 0.2 * math.sin(u * 0.9), 0.45 + 0.3 * abs(math.sin(u * 0.7))
+    ram, disk = 0.68 - 0.24 * _ease((u - 1.5) / 2.0), 0.62
+    film.pin(time_of_day=tod, cpu=cpu, net=net, ram=ram, disk=disk)
+    if abs(t - 7.2) < 0.01:
+        film.tap(8)
+    return f"{int(tod * 24):02d}:{int(tod * 1440) % 60:02d}   CPU {cpu * 100:.0f}%   memory {ram * 100:.0f}%   network {net * 100:.0f}%"
+
+
+def city_zoom(t, film):
+    """An afternoon. The load passes 85 % and the cat turns to the power plant, so the view goes there. A tap
+    comes back; a tap on the yard goes to the crane, which waits for the lens before it sets a container down."""
+    u = max(0.0, t)
+    cpu = 0.4 + 0.55 * _ease((u - 0.8) / 0.6) * (1 - _ease((u - 4.8) / 1.0))
+    disk = 0.62 if u < 6.2 else 0.66
+    film.pin(time_of_day=0.63 + u / 86400, cpu=cpu, net=0.55, ram=0.4, disk=disk)
+    for when, key in ((5.0, 9), (6.4, 12), (11.8, 12)):
+        if abs(t - when) < 0.01:
+            film.tap(key)
+    return f"CPU {cpu * 100:.0f}%   disk {disk * 100:.0f}%"
 
 
 def marbles(t, film):
@@ -245,7 +267,8 @@ CLIPS = {
     "tank": lambda: record(ROOT / "gallery" / "tank.gif", Film("fishbowl", FIX), tank, 13, warm=25, width=720),
     "limit": lambda: record(ROOT / "gallery" / "limit.gif", Film("fishbowl", FIX), limit, 9, warm=25, width=720),
     "night": lambda: record(ROOT / "gallery" / "night.gif", Film("fishbowl", FIX), night, 7, warm=25, width=720),
-    "city": lambda: record(ROOT / "gallery" / "city.gif", Film("city"), city, 10, fps=10, warm=3, width=720),
+    "city": lambda: record(ROOT / "gallery" / "city.gif", Film("city"), city, 11, fps=10, warm=3, width=720),
+    "zoom": lambda: record(ROOT / "gallery" / "city-zoom.gif", Film("city"), city_zoom, 13.5, fps=10, warm=3, width=720),
 }
 
 if __name__ == "__main__":
