@@ -29,19 +29,20 @@ faintly, so you can still see who is moving.
 
 ## A city through the window
 
-![A city seen from a few floors up, through the pad's fifteen screens as window panes: an avenue runs to a clock tower, a power plant smokes, containers stack up in a yard, and a cat watches from the sill.](gallery/city.gif)
+![A city district seen from about twenty floors up, through the pad's fifteen screens as window panes: a boulevard runs to a downtown skyline, a power plant smokes, containers fill a yard under a crane, and a cat watches from the sill.](gallery/city.gif)
 
 The fifteen screens are panes of one window and the bars between them are its glazing bars. Nothing is
-lined up with them. You look down an avenue from a few floors up, and buildings, cars and smoke pass
-behind the bars the way they do behind a real window.
+lined up with them. You look out over a district from about twenty floors up, and towers, traffic and
+smoke pass behind the bars the way they do behind a real window.
 
-The view is your computer. The power plant across the street is the CPU: its furnace windows glow
-hotter, the chimneys smoke harder, the cooling tower steams. Memory is the water tank on the roof next
-door, and when it runs tight it rains and the drops run down the glass, pane by pane. Network is the
-traffic on the avenue. Disk is the container yard below, where the stacks grow. The clock tower at the
-end of the avenue keeps the time, and pigeons leave it on the hour.
+The view is your computer. The power plant on the right is the CPU: its furnace doors glow hotter and
+its chimneys smoke harder. Memory is the water tank on the roof across the way, and when it runs tight
+it rains and the drops run down the glass, pane by pane. Network is the traffic on the boulevard and the
+rings from the tower downtown. Disk is the container yard below, where painted bays fill up and then
+stack. The clock tower keeps the time, and pigeons leave it on the hour. The big wheel and the airship
+are there because a city has them.
 
-A cat sits on the sill and watches the street. Tap a pane and it shows the number of what you see in it.
+A cat sits on the sill and watches the city. Tap a pane and it shows the number of what you see in it.
 
 Claude Haiku 5.5 wrote the first version of this city in under three minutes from one paragraph and
 a one-page manual. The [prompt, the file it wrote and what it cost](gallery/city/) are all here.
