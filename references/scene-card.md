@@ -70,7 +70,19 @@ per running agent session); `m18ctl signals` marks those.
     edges or comic gutters: big soft things (sky, water, shadows, light) run behind them, and a
     thing that moves passes behind a bar and comes out the other side.
   Never leave a subject parked half behind a bar, and never let it straddle two keys while it rests.
-- Each key is small: bold shapes, strong contrast, at most two short words per key.
+- **It is read from a chair, 60-75 cm away, and almost half of it is bar.** The keys show 55 % of the
+  canvas; the bars hide the other 45 %. From the chair one pixel is about the smallest thing an eye
+  can separate, so detail under 3 px is texture at best, never information.
+  - Whatever carries a number is big: 20 px or more across, with a stroke of 3 px or more, in a colour
+    far from what is behind it by day and by night. A 4 px dial is invisible; a 14 px wide sight glass reads.
+  - One idea per key. Ask of each key: seen alone and blurred, what is it? "Half a wall" is an answer
+    only for one or two keys.
+  - Text is 14 px or taller, two short words at most per key.
+  - Small details (a flower box, a cat's ear, a flag) are welcome as texture, on top of big shapes that
+    already read without them.
+  - Things meant to be seen whole are sized and placed so a bar does not cut their top or their face.
+  - Check with `m18ctl scene shot NAME --far`: it blurs the frame to what survives the distance.
+    If you cannot name each gauge and its level in that picture, make it bigger and plainer.
 - Map each signal to something a person can see change: count, size, speed, colour, position.
   Say which is which in the docstring.
 - Move things with `t` (`x = (t * 40) % W`), and ease state toward a signal a little each frame
@@ -101,6 +113,17 @@ horizon with a negative y) and `quality`. A frame costs about 0.15 s with ten ba
 goes the other way, so with a fixed camera you can sit a ball exactly in the middle of a key.
 [scenes/marbles.py](../scripts/m18/scenes/marbles.py) is a full example.
 
+## Two scenes to measure yours against
+
+Read one before you write. Your scene should hold up next to it in `--far`.
+
+- [scenes/city.py](../scripts/m18/scenes/city.py): *the bars are a frame.* One view through a window,
+  in perspective, nothing lined up with the keys. Every number has one big carrier (a 14 px sight
+  glass, a 34 px clock face, furnace windows, smoke, a stack of containers), and the small things
+  (flower boxes, a cat's ear twitch, pigeons on the hour) sit on top of shapes that read without them.
+- [scenes/marbles.py](../scripts/m18/scenes/marbles.py): *one thing per key.* Fifteen marbles, one
+  session each, state shown by motion, lift and glow.
+
 ## Make it, look at it
 
 ```
@@ -108,6 +131,8 @@ m18ctl scene new NAME                                # writes scenes/NAME.py fro
 m18ctl scene shot NAME --t 2,10 --set cpu=0.1 ram=0.2    # PNG, bars blacked out, no daemon needed
 m18ctl scene shot NAME --t 2,10 --set cpu=0.9 ram=0.9    # the other extreme
 ```
+
+Add `--far` to see it as it reads from the chair.
 
 `shot` prints the PNG path and any error with its line number; open the PNG. It holds one frame per
 `--t` time, stacked top to bottom, and the scene runs at about 4 frames a second up to each time, so

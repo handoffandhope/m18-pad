@@ -217,7 +217,10 @@ def cmd_scene(a):
             im = pl.frame(t_prev + (t - t_prev) * j / steps)
             if a.tap and i == 0 and j == steps:
                 pl.tap(a.tap); im = pl.frame(t)
-        frames.append(im if a.raw else S.bars(im))
+        im = im if a.raw else S.bars(im)
+        if a.far:                                   # as the eye gets it from the chair: detail under 3 px merges
+            im = im.resize((im.width // 3, im.height // 3), Image.BOX).resize(im.size, Image.BILINEAR)
+        frames.append(im)
     sheet = Image.new("RGB", (S.W, len(frames) * S.H + (len(frames) - 1) * 12), (40, 40, 40))
     for i, im in enumerate(frames):
         sheet.paste(im, (0, i * (S.H + 12)))
@@ -510,6 +513,7 @@ def main():
     p.add_argument("--set", nargs="*", metavar="NAME=0..1"); p.add_argument("--t", default="3", help="seconds, e.g. 0,5,20 for a strip")
     p.add_argument("--out"); p.add_argument("--raw", action="store_true", help="do not black out the bars")
     p.add_argument("--tap", type=int, metavar="KEY", help="tap this key at the first --t time")
+    p.add_argument("--far", action="store_true", help="blur to what reads from 2-3 feet away")
     p.add_argument("--scale", type=float, default=2); p.set_defaults(f=cmd_scene)
     p = sp.add_parser("record"); p.add_argument("out"); p.add_argument("--page"); p.add_argument("--seconds", type=float, default=6)
     p.add_argument("--fps", type=float, default=10); p.add_argument("--width", type=int, default=480); p.set_defaults(f=cmd_record)

@@ -86,6 +86,7 @@ def draw(im, d, s, t, state):
         d.polygon((P(x0, y1, z0), P(x0, y1, z1), P(x0, y0, z1), P(x0, y0, z0)), fill=mix(col, DARK, 0.35))
         d.polygon((P(x0, y1, z0), P(x1, y1, z0), P(x1, y1, z1), P(x0, y1, z1)), fill=mix(col, "#ffffff", 0.22))
         rect(P(x0, y1, z0), P(x1, y0, z0), col)
+        d.rectangle((*P(x0, y1, z0), *P(x1, y0, z0)), outline=mix(col, DARK, 0.6))
 
     # ---- the sky
     for y in range(0, int(HOR) + 2, 2):
@@ -116,20 +117,20 @@ def draw(im, d, s, t, state):
     # ---- the ground: pavement, the avenue running to the clock tower, a crossing
     d.rectangle((0, HOR, W, H), fill=sh("#8b8f9c", 0.75))
     road = sh("#3b3e4b", 0.7)
-    d.polygon((P(-8, 0, 20), P(8, 0, 20), P(8, 0, 90), P(-8, 0, 90)), fill=road)
-    c = P(0, 0, 92)
+    d.polygon((P(-8, 0, 20), P(8, 0, 20), P(8, 0, 75), P(-8, 0, 75)), fill=road)
+    c = P(0, 0, 77)
     d.ellipse((c[0] - 34, c[1] - 7, c[0] + 34, c[1] + 7), fill=road)
     d.ellipse((c[0] - 20, c[1] - 4, c[0] + 20, c[1] + 4), fill=sh("#5f8f5a", 0.6))
-    for z in range(26, 88, 7):
+    for z in range(26, 72, 7):
         d.polygon((P(-0.15, 0, z), P(0.15, 0, z), P(0.15, 0, z + 3), P(-0.15, 0, z + 3)), fill=sh("#d8d2a8", 0.5))
     for x in range(-7, 8, 2):
         d.polygon((P(x - 0.5, 0, 44), P(x + 0.5, 0, 44), P(x + 0.5, 0, 47.5), P(x - 0.5, 0, 47.5)), fill=sh("#d9dbe2", 0.5))
     for x in (-8, 8):
-        d.line((*P(x, 0, 20), *P(x, 0, 90)), fill=sh("#c3c6d0", 0.6))
+        d.line((*P(x, 0, 20), *P(x, 0, 75)), fill=sh("#c3c6d0", 0.6))
 
     # ---- net: the telecom tower on the skyline, left
-    a, b = P(-34, 50, 100), P(-26, 0, 100)
-    glass = sh("#3f6f93", 0.7, 100)
+    a, b = P(-32, 34, 70), P(-25, 0, 70)
+    glass = sh("#3f6f93", 0.7, 70)
     rect(a, b, glass)
     d.rectangle((b[0] - 5, a[1], b[0], b[1]), fill=mix(glass, DARK, 0.25))
     for y in range(int(a[1]) + 4, 100, 5):
@@ -137,22 +138,22 @@ def draw(im, d, s, t, state):
     cx = (a[0] + b[0]) / 2
     for y in range(int(a[1]) + 2, 100, 4):                      # the light strip: data going up
         k = ((y / 4 + t * (1 + 9 * net)) % 6) / 6
-        d.rectangle((cx - 1, y, cx + 1, y + 1), fill=mix("#5ef0c8", "#0d1626", min(1.0, k * 1.6)))
+        d.rectangle((cx - 2, y, cx + 2, y + 2), fill=mix("#5ef0c8", "#0d1626", min(1.0, k * 1.6)))
     tip = (cx, a[1] - 17)
     d.line((cx, a[1], *tip), fill=sh("#c4c9d6", 0.4), width=2)
     d.line((cx - 5, a[1], cx, a[1] - 10), fill=sh("#c4c9d6", 0.4))
     d.line((cx + 5, a[1], cx, a[1] - 10), fill=sh("#c4c9d6", 0.4))
     d.ellipse((cx - 8, a[1] - 7, cx - 2, a[1] - 1), fill=sh("#e3e6ee", 0.4))
-    d.ellipse((tip[0] - 2, tip[1] - 2, tip[0] + 2, tip[1] + 2), fill="#ff4d4d" if int(t * 2) % 2 else "#5a2030")
+    d.ellipse((tip[0] - 3, tip[1] - 3, tip[0] + 3, tip[1] + 3), fill="#ff4d4d" if int(t * 2) % 2 else "#5a2030")
     for i in range(1 + int(net * 3.99)):                        # rings from the mast: more and faster with traffic
         p = (t * (0.25 + 1.2 * net) + i / (1 + int(net * 3.99))) % 1.0
-        r, col = 4 + 15 * p, mix("#7df9ff", top, p)
-        d.arc((tip[0] - r, tip[1] - r, tip[0] + r, tip[1] + r), 320, 40, fill=col, width=2)
-        d.arc((tip[0] - r, tip[1] - r, tip[0] + r, tip[1] + r), 140, 220, fill=col, width=2)
+        r, col = 6 + 22 * p, mix(mix("#0b4fd0", "#7df9ff", night), top, p * 0.8)
+        d.arc((tip[0] - r, tip[1] - r, tip[0] + r, tip[1] + r), 315, 45, fill=col, width=3)
+        d.arc((tip[0] - r, tip[1] - r, tip[0] + r, tip[1] + r), 135, 225, fill=col, width=3)
 
     # ---- time_of_day: the clock tower closing the avenue
     stone = sh("#9c95a8", 0.62, 60)
-    a, b = P(-5, 43.5, 90), P(5, 0, 90)
+    a, b = P(-6, 44.5, 75), P(6, 0, 75)
     rect(a, b, stone)
     d.rectangle((b[0] - 8, a[1], b[0], b[1]), fill=mix(stone, DARK, 0.22))
     for y in range(98, 150, 12):
@@ -160,20 +161,17 @@ def draw(im, d, s, t, state):
         d.rectangle((VX - 1, y + 2, VX + 1, y + 9), fill=mix("#141222", "#ffd98a", dusk))
     d.pieslice((VX - 6, b[1] - 16, VX + 6, b[1] - 2), 180, 360, fill="#2a1c1a")
     d.rectangle((VX - 6, b[1] - 9, VX + 6, b[1]), fill="#2a1c1a")
-    d.polygon(((a[0] - 3, a[1]), (VX, 6), (b[0] + 3, a[1])), fill=sh("#4a4763", 0.62, 60))
-    d.line((VX, 6, VX, 0), fill=sh("#c4c9d6", 0.3))
-    d.polygon(((VX, 0), (VX + 9, 2 + math.sin(t * 3)), (VX, 5)), fill=sh("#d6453d", 0.4))
-    fx, fy = P(0, 37.9, 90)
-    d.ellipse((fx - 14, fy - 14, fx + 14, fy + 14), fill=mix(stone, DARK, 0.45))
-    d.ellipse((fx - 12, fy - 12, fx + 12, fy + 12), fill=mix("#f6ecc8", "#ffe9a8", dusk))
-    for k in range(12):
-        an = k * math.pi / 6
-        r0 = 8 if k % 3 == 0 else 10
-        d.line((fx + r0 * math.sin(an), fy - r0 * math.cos(an), fx + 11 * math.sin(an), fy - 11 * math.cos(an)), fill="#3a3144")
-    for turn, ln, wd in ((day * 2, 6, 3), (day * 24, 10, 2)):   # hour hand, minute hand
+    d.polygon(((a[0] - 3, a[1]), (VX, 1), (b[0] + 3, a[1])), fill=sh("#4a4763", 0.62, 60))
+    fx, fy = P(0, 38.8, 75)
+    d.ellipse((fx - 20, fy - 20, fx + 20, fy + 20), fill=mix(stone, DARK, 0.55))
+    d.ellipse((fx - 17, fy - 17, fx + 17, fy + 17), fill=mix("#f6ecc8", "#ffe9a8", dusk))
+    for k in range(4):                                          # quarter marks only: they read from the chair
+        an = k * math.pi / 2
+        d.line((fx + 12 * math.sin(an), fy - 12 * math.cos(an), fx + 16 * math.sin(an), fy - 16 * math.cos(an)), fill="#3a3144", width=3)
+    for turn, ln, wd in ((day * 2, 9, 5), (day * 24, 14, 3)):   # hour hand, minute hand
         an = turn * 2 * math.pi
         d.line((fx, fy, fx + ln * math.sin(an), fy - ln * math.cos(an)), fill="#1a1626", width=wd)
-    d.ellipse((fx - 1, fy - 1, fx + 1, fy + 1), fill="#b0503c")
+    d.ellipse((fx - 2, fy - 2, fx + 2, fy + 2), fill="#b0503c")
     since = ((day * 24) % 1.0) * 3600                           # pigeons leave on the hour
     if since < 22:
         for i in range(7):
@@ -184,11 +182,11 @@ def draw(im, d, s, t, state):
 
     # ---- cpu: the power plant across the street, behind the container yard
     for cx0 in (21, 29):                                        # two chimneys
-        a, b = P(cx0, 34, 66), P(cx0 + 2.2, 16, 66)
+        a, b = P(cx0 - 0.5, 34, 66), P(cx0 + 2.7, 16, 66)
         rect(a, b, sh("#a3a3ae", 0.62, 66))
         d.rectangle((b[0] - 2, a[1], b[0], b[1]), fill=sh("#7d7d8a", 0.62, 66))
-        for band in (0, 9):
-            d.rectangle((a[0], a[1] + band, b[0], a[1] + band + 3), fill=sh("#d6453d", 0.45, 66))
+        for band in (0, 11):
+            d.rectangle((a[0], a[1] + band, b[0], a[1] + band + 5), fill=sh("#d6453d", 0.45))
     cx, base, rim = P(51, 0, 75)[0], P(51, 0, 75)[1], P(51, 36, 75)[1]          # the cooling tower
     prof = [(0.0, 21), (0.3, 16), (0.65, 12.5), (0.85, 13), (1.0, 15)]
     cool = sh("#b9bcc6", 0.62, 75)
@@ -218,7 +216,7 @@ def draw(im, d, s, t, state):
         n = 1 + int(cpu * 5)
         for i in range(n):
             p = (t * (0.07 + 0.45 * cpu) + i / n + cx0) % 1.0
-            px, py, r = sx + 18 * p + 2 * math.sin(t + i), sy - 3 - 40 * p, 3 + 6 * p
+            px, py, r = sx + 18 * p + 2 * math.sin(t + i), sy - 4 - 40 * p, 5 + 7 * p
             d.ellipse((px - r, py - r, px + r, py + r), fill=mix(mix("#d8d8e0", "#55586a", cpu), mix(top, low, 0.2), p * 0.8))
     n = 2 + int(cpu * 6)                                        # steam
     for i in range(n):
@@ -255,9 +253,10 @@ def draw(im, d, s, t, state):
 
     # ---- ram: the apartments next door, close, with the water tank on the roof
     wood, steel = sh("#7a5a3c"), sh("#5b6170")
-    tl, br = P(-29, 30, 40), P(-25, 25.5, 40)
+    tl, br = P(-29.4, 30.6, 36), P(-22.8, 24.4, 36)
+    gx0 = (tl[0] + br[0]) / 2
     for x in (tl[0] + 3, br[0] - 3):
-        d.line((x, br[1], x - (2 if x < 44 else -2), 62), fill=steel, width=2)
+        d.line((x, br[1], x - (2 if x < gx0 else -2), 62), fill=steel, width=2)
     d.line((tl[0] + 3, br[1] + 3, br[0] - 3, 60), fill=steel)
     d.line((br[0] - 3, br[1] + 3, tl[0] + 3, 60), fill=steel)
     rect(tl, br, wood)
@@ -265,13 +264,13 @@ def draw(im, d, s, t, state):
         d.line((x, tl[1], x, br[1]), fill=mix(wood, DARK, 0.3))
     for y in (tl[1] + 5, br[1] - 5):
         d.line((tl[0], y, br[0], y), fill=steel)
-    d.polygon(((tl[0] - 3, tl[1]), ((tl[0] + br[0]) / 2, tl[1] - 12), (br[0] + 3, tl[1])), fill=sh("#4d5364"))
+    d.rectangle((tl[0] - 3, tl[1] - 1, br[0] + 3, tl[1] + 3), fill=sh("#4d5364"))
     gx = (tl[0] + br[0]) / 2
-    d.rectangle((gx - 4, tl[1] + 3, gx + 4, br[1] - 2), fill="#0e1322")     # the sight glass: memory in use
-    full = (br[1] - tl[1] - 7) * ram
+    d.rectangle((gx - 9, tl[1] + 6, gx + 9, br[1] - 2), fill="#0e1322")     # the sight glass: memory in use
+    full = (br[1] - tl[1] - 11) * ram
     water = "#ff6b5e" if ram > 0.9 else "#58b8ff"
-    d.rectangle((gx - 3, br[1] - 3 - full, gx + 3, br[1] - 3), fill=water)
-    d.line((gx - 3, br[1] - 3 - full, gx + 3, br[1] - 3 - full), fill=mix(water, "#ffffff", 0.6))
+    d.rectangle((gx - 7, br[1] - 4 - full, gx + 7, br[1] - 4), fill=water)
+    d.rectangle((gx - 7, br[1] - 4 - full, gx + 7, br[1] - 3 - full), fill=mix(water, "#ffffff", 0.6))
     wall = sh("#c9a88a")
     side = mix(wall, DARK, 0.3)
     homes = state["homes"]
@@ -325,11 +324,11 @@ def draw(im, d, s, t, state):
     d.rectangle((sg[0], sg[1], sg[0] + 9, sg[1] + 5), fill="#ff5fa2" if int(t * 1.5) % 5 else "#5a2440")
 
     # ---- the street: lamps and traffic, far to near
-    things = [(z, "lamp", x) for z in (30, 40, 52, 68, 86) for x in (-10, 10)]
+    things = [(z, "lamp", x) for z in (30, 40, 52, 68) for x in (-10, 10)]
     n = 2 + int(net * (len(state["cars"]) - 2))                 # more traffic, more cars
     for ph, col, away in state["cars"][:n]:
         p = (ph + t / 9.0) % 1.0
-        things.append((27 + p * 61 if away else 88 - p * 61, "car", (col, away)))
+        things.append((27 + p * 45 if away else 72 - p * 45, "car", (col, away)))
     for z, kind, v in sorted(things, key=lambda th: -th[0]):
         k = F / z
         if kind == "lamp":
@@ -374,12 +373,13 @@ def draw(im, d, s, t, state):
     d.line((0, H - 9, W, H - 9), fill=mix("#7a5a48", DARK, 0.3 + 0.4 * night))
     fur = "#0d0b12"                                             # the cat watches the street
     tail = math.sin(t * 0.9) * (1 if int(t / 7) % 2 else 0.3)
-    d.ellipse((30, 214, 56, 248), fill=fur)
-    d.ellipse((36, 198, 54, 216), fill=fur)
-    twitch = 2 if t % 11 < 0.3 else 0
-    d.polygon(((37, 204), (38, 193 + twitch), (44, 200)), fill=fur)
-    d.polygon(((47, 200), (53, 193), (54, 205)), fill=fur)
-    d.line((34, 244, 20, 245, 12 + 3 * tail, 240 - 5 * abs(tail), 9 + 6 * tail, 234), fill=fur, width=3)
+    twitch = 3 if t % 11 < 0.3 else 0
+    for g, col in ((2, mix("#b9a48f", "#ffd9a0", dusk)), (0, fur)):   # a rim of light, then the cat
+        d.ellipse((20 - g, 216 - g, 58 + g, 256), fill=col)
+        d.ellipse((28 - g, 198 - g, 54 + g, 222 + g), fill=col)
+        d.polygon(((29 - g, 208), (31, 191 + twitch - g), (40, 201 - g)), fill=col)
+        d.polygon(((43, 201 - g), (52, 191 - g), (54 + g, 208)), fill=col)
+        d.line((26, 245, 12, 245, 6 + 3 * tail, 238 - 6 * abs(tail), 4 + 6 * tail, 228), fill=col, width=4 + g)
     d.rectangle((417, 232, 433, 243), fill=mix("#b5623f", DARK, 0.25 + 0.5 * night))
     d.rectangle((415, 230, 435, 233), fill=mix("#c9764f", DARK, 0.25 + 0.5 * night))
     for i, (dx, dy) in enumerate(((-9, -14), (-4, -19), (2, -21), (8, -16), (12, -10))):
