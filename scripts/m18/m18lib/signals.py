@@ -165,12 +165,14 @@ class Hub:
         self._due: dict[str, float] = {}
         self._memo: dict[str, dict] = {}
         self._user: dict[str, tuple] = {}
-        self._fixed: dict[str, float] = {}
+        self._fixed: dict = {}
         self._thread = None
+        self.clock = time.time                   # a recorder may replace it to play simulated signals at its own pace
 
-    # -- test hook: `hub.fix(cpu=0.9)` pins a value (m18ctl scene shot --set cpu=0.9)
+    # -- test hook: `hub.fix(cpu=0.9)` pins a value (m18ctl scene shot --set cpu=0.9). A dict pins a whole
+    #    reading, for list signals: hub.fix(agents={"value": 0.5, "text": "2 agents", "items": [...]})
     def fix(self, **values):
-        self._fixed.update({k: _clamp(v) for k, v in values.items()})
+        self._fixed.update({k: dict(v) if isinstance(v, dict) else _clamp(v) for k, v in values.items()})
 
     def unfix(self, *names):
         for n in names or list(self._fixed):
@@ -228,7 +230,7 @@ class Hub:
         try:
             if name in self._fixed:
                 v = self._fixed[name]
-                raw, period = {"value": v, "text": f"{v * 100:.0f}%"}, 0.2
+                raw, period = (v if isinstance(v, dict) else {"value": v, "text": f"{v * 100:.0f}%"}), 0.2
                 label = BUILTIN[name][2] if name in BUILTIN else label
             elif self.sim:
                 mod = None if name in BUILTIN else self._user_mod(name)
@@ -286,7 +288,7 @@ class Hub:
     def snapshot(self, names) -> Snapshot:
         """Latest reading of each name. A built-in is read at once on first use; a user signal starts as
         0 ("--") and is read on the background thread, so a slow one never holds a frame."""
-        now, out = time.time(), {}
+        now, out = self.clock(), {}
         for name in names:
             if name not in self._vals and not (self.sim or name in self._fixed or name in BUILTIN):
                 with self._lock:                                  # a user signal may be slow: first read on the thread

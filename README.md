@@ -1,29 +1,69 @@
 # m18-pad
 
-A macro pad your coding agents can use.
+Fifteen small screens under your monitor that show what your AI agents are doing. It runs on a
+VSD M18 macro pad: 15 LCD keys, 3 buttons and a ring of 24 lights.
 
-`m18d` is a small Python daemon for the VSDinside VSD M18 (15 LCD keys, 3 buttons, a 24-LED ring).
-It replaces the vendor app with one YAML file, and it ships as an agent skill, so Claude Code or
-Codex can add keys for you: "make a key that mutes Discord".
+![A fish tank across the 15 keys of the pad. One creature swims up to the glass with a question mark over it, the ring of lights round the pad turns gold, and a tap shows its name.](gallery/tank.gif)
 
-Agent sessions get the pad too. Each session can show its state on its own key, draw its own
-16x16 face, and put up a physical go/stop button that you press with a finger.
+Every creature in this tank is a running Claude Code or Codex session. While they work, they swim.
+When one stops to ask you something it comes up to the glass with a `?` over its head, and the ring
+of lights round the pad breathes gold until you answer. Tap the creature and it tells you which
+session it is. Tap again and that session's window opens.
+
+**[Play with it in your browser](https://handoffandhope.github.io/m18-pad/)**. It is the same code
+that runs on the pad, with sliders for everything it reacts to.
+
+## The water is your usage limit
+
+![The water level in the tank falls, then the whole tank freezes over and the ring turns icy white.](gallery/limit.gif)
+
+The waterline falls as your 5-hour Claude window fills up. When you hit the limit the tank freezes,
+creatures and all, and the ice thins as the reset gets closer.
+
+## At nine the lights go out
+
+![The tank dims to night. The lamp key keeps a cone of light and the creatures glow faintly.](gallery/night.gif)
+
+After 21:00 the tank goes dark and the lamp in the corner is what is left. The creatures glow
+faintly, so you can still see who is moving.
+
+## A city, built by the cheapest model in three minutes
+
+![A night skyline across the keys. Windows light up, cars pass, the moon crosses the top row and the ring fills cyan.](gallery/city.gif)
+
+The windows light up with CPU load. Traffic follows your network, the moon crosses the top row once
+a day, and it rains when memory runs above 80%. Tap a building and it shows the number behind it.
+Claude Haiku 5.5 wrote this from one paragraph and a one-page manual. The
+[prompt, the file it wrote and what it cost](gallery/city/) are all here.
+
+## Or one quiet picture across every key
+
+| hillside | vaporjazz | wabisabi |
+|---|---|---|
+| ![hillside](aesthetics/hillside/preview.png) | ![vaporjazz](aesthetics/vaporjazz/preview.png) | ![wabisabi](aesthetics/wabisabi/preview.png) |
+
+Three themes paint all 15 keys as one scene and keep your shortcuts on top of it
+([aesthetics/](aesthetics/README.md)).
+
+## The agents get the pad too
+
+A session can put its state on its own key, draw its own 16x16 face there, and put up a real go/stop
+button that you press with a finger: "deploy?" lights up, you press it, the agent carries on
+([references/agents.md](references/agents.md)). And because the whole thing ships as an agent skill,
+you add keys by asking: "make a key that mutes Discord".
+
+## What this is
+
+`m18d` is a small Python daemon for the VSDinside VSD M18, a macro pad with 15 LCD keys, 3 buttons
+and a ring of 24 LEDs. It replaces the vendor app with one YAML file. You need the pad, Windows and
+Python; without the pad, everything above still runs in the [browser](https://handoffandhope.github.io/m18-pad/)
+and in mock mode.
+
+The clips on this page are the real scene code drawn onto a picture of the pad by
+[gallery/film.py](gallery/film.py), with scripted agents and a scripted clock. The names in the tank
+are made up.
 
 Unofficial. Not affiliated with or endorsed by VSDinside or Mirabox.
-
-![The fish bowl page: one tank across 15 keys](gallery/fishbowl.gif)
-
-**[Try the pad in your browser](https://handoffandhope.github.io/m18-pad/)**: the real scene code, live, with sliders for the signals.
-
-## Gallery: pages built by agents
-
-Every picture here was recorded from the mock pad with `m18ctl record`. The frame, key numbers and
-button labels come from the preview; on the real pad you see only the 15 screens.
-
-| | |
-|---|---|
-| ![Fish bowl](gallery/fishbowl.gif) | **Fish bowl.** One tank seen through 15 windows. Each creature is a running agent session, and it swims to the glass when it needs you. The lamp, buoy, filter and chest are working keys. |
-| ![City](gallery/city.gif) | **City.** Windows light up with CPU load, the moon crosses the sky through the day, traffic follows network activity, and it rains above 80% memory use. Claude Haiku 5.5 built it in under three minutes from one paragraph and a one-page manual: [prompt, scene file and cost](gallery/city/). |
 
 ## Design a page with a small model
 
