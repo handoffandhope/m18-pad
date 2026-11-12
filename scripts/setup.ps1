@@ -48,7 +48,7 @@ if (-not (Test-Path "$venv\Scripts\python.exe")) {
   if ($py) { & py -3 -m venv $venv } else { & python -m venv $venv }
 }
 & "$venv\Scripts\python.exe" -m pip install -q --upgrade pip
-& "$venv\Scripts\python.exe" -m pip install -q pillow pyyaml psutil nvidia-ml-py wmi pywin32
+& "$venv\Scripts\python.exe" -m pip install -q pillow pyyaml psutil numpy nvidia-ml-py wmi pywin32
 
 # 3. VSDinside SDK (official M18 driver + transport.dll)
 $sdk = "$InstallDir\sdk"

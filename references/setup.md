@@ -4,7 +4,7 @@
 ```powershell
 powershell -ExecutionPolicy Bypass -File <skill>\scripts\setup.ps1
 ```
-This copies the daemon to `%USERPROFILE%\tools\m18`, creates a venv (pillow, pyyaml, psutil,
+This copies the daemon to `%USERPROFILE%\tools\m18`, creates a venv (pillow, pyyaml, psutil, numpy,
 nvidia-ml-py, wmi, pywin32), clones VSDinside's official SDK into `sdk\`, writes `m18ctl.cmd`,
 and adds a Startup shortcut so the daemon runs hidden at login (`-NoStartup` skips that).
 Re-running it updates the code and keeps `macros.yaml` and the user's plugins.

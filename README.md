@@ -36,6 +36,15 @@ a day, and it rains when memory runs above 80%. Tap a building and it shows the 
 Claude Haiku 5.5 wrote this from one paragraph and a one-page manual. The
 [prompt, the file it wrote and what it cost](gallery/city/) are all here.
 
+## It does not have to be pixel art
+
+![Glossy marbles circle a stone floor as the afternoon turns to dusk. One lifts off the floor, glows gold and lights the others.](gallery/marbles.gif)
+
+This one is ray traced: real shadows, reflections in the floor, a sun that sets. Each marble is an
+agent session. The one with a question lifts off the floor and becomes a lamp for the rest, and at
+night they all glow. It is [100 lines](scripts/m18/scenes/marbles.py) on top of a small 3D helper,
+so a scene you ask for can be 3D too.
+
 ## Or one quiet picture across every key
 
 | hillside | vaporjazz | wabisabi |

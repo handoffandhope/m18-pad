@@ -120,17 +120,17 @@ class Film:
         shutil.rmtree(self.base, ignore_errors=True)
 
 
-def record(out: Path, film: Film, story, seconds: float, fps: int = 8, warm: float = 0.0, width: int | None = None):
+def record(out: Path, film: Film, story, seconds: float, fps: int = 8, warm: float = 0.0, width: int | None = None, smooth: bool = False):
     """Run `story` for `warm` seconds unrecorded (things settle), then record `seconds` at `fps`.
     What `story` returns is the caption under the pad for that frame."""
     try:
-        _record(out, film, story, seconds, fps, warm, width)
+        _record(out, film, story, seconds, fps, warm, width, smooth)
     finally:
         film.close()
         out.with_suffix(".tmp.gif").unlink(missing_ok=True)
 
 
-def _record(out, film, story, seconds, fps, warm, width):
+def _record(out, film, story, seconds, fps, warm, width, smooth):
     t0 = time.time()
     n_warm = int(warm * fps)
     frames = []
@@ -153,11 +153,11 @@ def _record(out, film, story, seconds, fps, warm, width):
     sample = Image.new("RGB", (frames[0].width, frames[0].height * len(frames[::step])))
     for j, f in enumerate(frames[::step]):
         sample.paste(f, (0, j * f.height))
-    pal = sample.quantize(160, method=Image.Quantize.MEDIANCUT)
+    pal = sample.quantize(255 if smooth else 160, method=Image.Quantize.MEDIANCUT)   # smooth: for soft gradients (3D)
     hole = mask.point(lambda v: 255 if v < 128 else 0)
     out_frames = []
     for f in frames:
-        q = f.quantize(palette=pal, dither=Image.Dither.NONE)
+        q = f.quantize(palette=pal, dither=Image.Dither.FLOYDSTEINBERG if smooth else Image.Dither.NONE)
         q.paste(255, (0, 0), hole)
         out_frames.append(q)
     tmp = out.with_suffix(".tmp.gif")                  # a failed save never leaves a cut-off clip in place
@@ -231,7 +231,16 @@ def city(t, film):
     return f"CPU {cpu * 100:.0f}%   network {net * 100:.0f}%   memory {ram * 100:.0f}%"
 
 
+def marbles(t, film):
+    """An afternoon into dusk in 3D: one marble has a question, so it lifts off the floor and lights its neighbours."""
+    tod = 0.55 + 0.18 * max(0.0, min(1.0, t / 11.0))
+    asked = 2.0 <= t < 9.5
+    film.pin(agents=roster({"haze": ("waiting", "question")} if asked else None), claude_usage=usage(0.4), time_of_day=tod, cpu=0.5)
+    return f"{int(tod * 24):02d}:{int(tod * 1440) % 60:02d}   " + ("haze has a question" if asked else "7 agents working")
+
+
 CLIPS = {
+    "marbles": lambda: record(ROOT / "gallery" / "marbles.gif", Film("marbles"), marbles, 12, fps=6, warm=4, width=720, smooth=True),
     "tank": lambda: record(ROOT / "gallery" / "tank.gif", Film("fishbowl", FIX), tank, 13, warm=25, width=720),
     "limit": lambda: record(ROOT / "gallery" / "limit.gif", Film("fishbowl", FIX), limit, 9, warm=25, width=720),
     "night": lambda: record(ROOT / "gallery" / "night.gif", Film("fishbowl", FIX), night, 7, warm=25, width=720),

@@ -72,9 +72,9 @@
 
 <script src="https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.js"></script>
 <script>
-const SCENES = ["city", "fishbowl", "_template"];
-const TITLES = {city: "city", fishbowl: "fish bowl (agent sessions)", _template: "starter template"};
-const LIB = ["__init__", "render", "tiles", "signals", "scene", "ringmap", "fishart"];
+const SCENES = ["city", "fishbowl", "marbles", "_template"];
+const TITLES = {city: "city", marbles: "marbles (3D, agent sessions)", fishbowl: "fish bowl (agent sessions)", _template: "starter template"};
+const LIB = ["__init__", "render", "tiles", "signals", "scene", "ringmap", "fishart", "ray"];
 const EXTRA = ["plugins/fishbowl.py", "signals/agents.py", "signals/claude_usage.py"];   // the fish bowl's engine and its two signals
 const SRC = "scripts/m18/";
 const W = 440, H = 252, PITCH = 94, K = 2;                  // K: pad pixels per key pixel
@@ -181,7 +181,7 @@ $("src").addEventListener("keydown", e => {
     drawBody();
     const get = async p => { const r = await fetch(SRC + p); if (!r.ok) throw new Error(`${p}: ${r.status}`); return r.text(); };
     const [pyo, lib, scn, extra] = await Promise.all([
-      loadPyodide().then(async p => { await p.loadPackage("pillow"); return p; }),
+      loadPyodide().then(async p => { await p.loadPackage(["pillow", "numpy"]); return p; }),
       Promise.all(LIB.map(n => get(`m18lib/${n}.py`))), Promise.all(SCENES.map(n => get(`scenes/${n}.py`))), Promise.all(EXTRA.map(get))]);
     py = pyo;
     for (const d of ["m18lib", "scenes", "plugins", "signals"]) py.FS.mkdirTree("/m18/" + d);

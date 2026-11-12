@@ -70,6 +70,28 @@ per running agent session); `m18ctl signals` marks those.
 - `draw` runs up to 20 times a second: build lists and backgrounds in `setup`, loop over a few
   hundred shapes at most.
 
+## 3D
+
+`m18lib.ray` is a small ray tracer: balls on a floor under a sky, with a sun, soft shadows,
+reflections and lamps. y is up and the floor is y = 0, so a ball of radius r rests at y = r.
+
+```python
+from m18lib import ray
+
+def draw(im, d, s, t, state):
+    balls = [ray.ball((0, 1, 0), 1, "#e63946", gloss=0.6),            # (x, y, z), radius, colour
+             ray.ball((2, 0.5 + 2 * s.cpu.value, 1), 0.5, "#ffd166", glow=2.0)]   # glow = a lamp
+    cam = ray.orbit(t * 0.2, height=4, dist=11)                       # or ray.camera(eye, look)
+    im.paste(ray.render(balls, cam, sun=(0.5, 0.7, -0.4), sky=("#f2a65a", "#1b2a5c"),
+                        floor="#8c909e", floor2="#747a8c"))
+    # then draw 2D on top with d as usual
+```
+
+`render` also takes `gloss` (the floor's), `fog`, `stars` (0..1, for night; put the sun below the
+horizon with a negative y) and `quality`. A frame costs about 0.15 s with ten balls, so set `FPS = 6`.
+`ray.project(cam, (x, y, z))` gives the canvas pixel of a 3D point, for taps and labels.
+[scenes/marbles.py](../scripts/m18/scenes/marbles.py) is a full example.
+
 ## Make it, look at it
 
 ```
