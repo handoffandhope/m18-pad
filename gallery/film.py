@@ -232,7 +232,7 @@ def city(t, film):
 
 
 def marbles(t, film):
-    """An afternoon into dusk in 3D: one marble has a question, so it lifts off the floor and lights its neighbours."""
+    """An afternoon into dusk in 3D, one marble per key: one marble has a question, so it lifts off the floor and lights its neighbours."""
     tod = 0.55 + 0.18 * max(0.0, min(1.0, t / 11.0))
     asked = 2.0 <= t < 9.5
     film.pin(agents=roster({"haze": ("waiting", "question")} if asked else None), claude_usage=usage(0.4), time_of_day=tod, cpu=0.5)

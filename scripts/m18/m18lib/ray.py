@@ -210,3 +210,14 @@ def render(balls, cam, sun=(0.5, 0.7, -0.4), sun_color="#fff1d6", sky=("#f2a65a"
         halo = Image.fromarray((np.clip(hot * F(0.5), 0, 1) ** F(1 / 2.2) * 255).astype(np.uint8).reshape(h, w, 3), "RGB")
         img = ImageChops.add(img, halo.filter(ImageFilter.GaussianBlur(max(2, h // 28))))
     return img if (w, h) == tuple(size) else img.resize(size, Image.LANCZOS)
+
+
+def unproject(cam, x, y, height=0.0, size=(W, H)):
+    """The 3D point under canvas pixel (x, y) on the level plane y = `height`, or None when the pixel looks at the sky.
+    With `key_box` this puts a thing exactly in a key: `ray.unproject(cam, x0 + 32, y0 + 32, r)`."""
+    eye, f, right, up, th = _basis(cam)
+    d = f + (x - size[0] / 2) / (size[1] / 2) * th * right + (size[1] / 2 - y) / (size[1] / 2) * th * up
+    if d[1] > -1e-5:
+        return None
+    k = (height - eye[1]) / d[1]
+    return tuple(float(v) for v in eye + d * k)

@@ -62,6 +62,14 @@ per running agent session); `m18ctl signals` marks those.
 - Key column c (0-4) shows x = c·94 … c·94+63; row r (0-2) shows y = r·94 … r·94+63. The 30 px
   strips between are **hidden behind bars**. Shapes may cross a bar (they continue correctly on
   the other side), but anything that must be read (text, a face, an icon) sits inside one key.
+- **Design for the grid, since the pad is 15 separate screens.** Pick one of these and say which in the
+  docstring:
+  - *One thing per key.* Each subject (a session, a building, a gauge) gets a key of its own and is
+    centred in it (`x0 + 32, y0 + 32` from `key_box`). A tap on the key is then a tap on that thing.
+  - *The bars are a frame.* Draw one continuous picture and treat the bars as window bars, shelf
+    edges or comic gutters: big soft things (sky, water, shadows, light) run behind them, and a
+    thing that moves passes behind a bar and comes out the other side.
+  Never leave a subject parked half behind a bar, and never let it straddle two keys while it rests.
 - Each key is small: bold shapes, strong contrast, at most two short words per key.
 - Map each signal to something a person can see change: count, size, speed, colour, position.
   Say which is which in the docstring.
@@ -89,7 +97,8 @@ def draw(im, d, s, t, state):
 
 `render` also takes `gloss` (the floor's), `fog`, `stars` (0..1, for night; put the sun below the
 horizon with a negative y) and `quality`. A frame costs about 0.15 s with ten balls, so set `FPS = 6`.
-`ray.project(cam, (x, y, z))` gives the canvas pixel of a 3D point, for taps and labels.
+`ray.project(cam, (x, y, z))` gives the canvas pixel of a 3D point. `ray.unproject(cam, x, y, height)`
+goes the other way, so with a fixed camera you can sit a ball exactly in the middle of a key.
 [scenes/marbles.py](../scripts/m18/scenes/marbles.py) is a full example.
 
 ## Make it, look at it

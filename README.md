@@ -38,12 +38,14 @@ Claude Haiku 5.5 wrote this from one paragraph and a one-page manual. The
 
 ## It does not have to be pixel art
 
-![Glossy marbles circle a stone floor as the afternoon turns to dusk. One lifts off the floor, glows gold and lights the others.](gallery/marbles.gif)
+![A glossy marble sits in each key on a stone floor. Shadows lengthen behind the bars as the afternoon turns to dusk, and one marble lifts, glows gold and lights the others.](gallery/marbles.gif)
 
-This one is ray traced: real shadows, reflections in the floor, a sun that sets. Each marble is an
-agent session. The one with a question lifts off the floor and becomes a lamp for the rest, and at
-night they all glow. It is [100 lines](scripts/m18/scenes/marbles.py) on top of a small 3D helper,
-so a scene you ask for can be 3D too.
+This one is ray traced: real shadows, reflections in the floor, a sun that sets. Each agent session
+is a marble with a key of its own, so a tap on a key is a tap on that session. The bars between the
+screens work as a window frame: the shadows run behind them into the next key. The one with a
+question lifts off the floor and becomes a lamp for the rest, and at night they all glow. It is
+[110 lines](scripts/m18/scenes/marbles.py) on top of a small 3D helper, so a scene you ask for can
+be 3D too.
 
 ## Or one quiet picture across every key
 
