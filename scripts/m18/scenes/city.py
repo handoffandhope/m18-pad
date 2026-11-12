@@ -44,7 +44,7 @@ def setup(state):
     state["stars"] = [(rnd.randrange(W), rnd.randrange(110), rnd.random() * 6.28) for _ in range(60)]
     state["cars"] = [(((i // 2) * 5 % 6) / 6 + rnd.random() * 0.05, rnd.choice(CARS), i % 2) for i in range(12)]
     state["homes"] = [(rnd.random() * 6.28, rnd.random(), rnd.random()) for _ in range(32)]
-    order = [(lv, i) for lv in range(4) for i in rnd.sample(range(9), 9)]       # stacks fill unevenly
+    order = [(lv, i) for lv in range(2) for i in rnd.sample(range(12), 12)]     # bays fill in no order
     state["boxes"] = [(lv, i, rnd.choice(BOXES)) for lv, i in order]
     state["clouds"] = [(rnd.random(), 6 + rnd.randrange(34), 14 + rnd.randrange(12)) for _ in range(4)]
     state["beads"] = [(rnd.randrange(3, 61), rnd.random(), 0.5 + rnd.random()) for _ in range(15 * 7)]
@@ -225,18 +225,21 @@ def draw(im, d, s, t, state):
         d.ellipse((px - r, py - r, px + r, py + r), fill=mix(mix("#f4f6fa", top, night * 0.6), mix(top, low, 0.3), p * 0.85))
 
     # ---- disk: the container yard below, and its crane
-    d.polygon((P(11.5, 0, 28), P(60, 0, 28), P(60, 0, 46), P(11.5, 0, 46)), fill=sh("#62656f", 0.7))
+    d.polygon((P(11.5, 0, 28), P(60, 0, 28), P(60, 0, 52), P(11.5, 0, 52)), fill=sh("#4a4d58", 0.7))
     crane = sh("#e0a526", 0.45)
     for x in (12.4, 34):
         d.line((*P(x, 0, 45), *P(x, 17.5, 45)), fill=mix(crane, DARK, 0.3), width=2)
-    count = round(disk * 36)
+    count = round(disk * 24)                                    # twelve painted bays, two high
     live = {(lv, i): col for n, (lv, i, col) in enumerate(state["boxes"]) if n < count}
-    for zi, z0 in enumerate((41, 36, 31)):                      # far rows first, far columns first, bottom up
-        for xi in (2, 1, 0):
-            for lv in range(4):
-                col = live.get((lv, zi * 3 + xi))
+    paint = sh("#d4d7e0", 0.5)
+    for zi, z0 in enumerate((45.5, 37.5, 30.5)):                # far rows first, far columns first, bottom up
+        for xi in (3, 2, 1, 0):
+            x0 = 12.5 + xi * 7.2
+            d.polygon((P(x0, 0, z0), P(x0 + 6, 0, z0), P(x0 + 6, 0, z0 + 3), P(x0, 0, z0 + 3)), outline=paint)
+            for lv in (0, 1):
+                col = live.get((lv, zi * 4 + xi))
                 if col:
-                    crate(13.5 + xi * 6.1, 19.1 + xi * 6.1, lv * 2.6, lv * 2.6 + 2.5, z0, z0 + 2.6, sh(col, 0.5))
+                    crate(x0, x0 + 6, lv * 2.6, lv * 2.6 + 2.6, z0, z0 + 3, sh(col, 0.45))
     for x in (12.4, 34):
         d.line((*P(x, 0, 30), *P(x, 17.5, 30)), fill=crane, width=3)
         d.line((*P(x, 17.5, 30), *P(x, 17.5, 45)), fill=crane, width=2)
@@ -282,34 +285,46 @@ def draw(im, d, s, t, state):
         return on, col, ph, who, kind
 
     d.polygon((P(-12, 22, 34), P(-12, 22, 60), P(-12, 0, 60), P(-12, 0, 34)), fill=side)
-    for r in range(4):                                          # the side that faces the avenue
-        y0 = 5.6 + 3.95 * r
-        for j, z in enumerate((37, 43, 49, 55)):
-            on, col, *_ = pane_of(16 + r * 4 + j)
-            d.polygon((P(-12, y0 + 3.2, z), P(-12, y0 + 3.2, z + 3.2), P(-12, y0, z + 3.2), P(-12, y0, z)), fill=mix(col, side, 0.2))
+    for r, yc in enumerate((6.9, 13.2, 19.5)):                  # the side that faces the avenue
+        for j, z in enumerate((37.5, 44.5, 51.5)):
+            on, col, *_ = pane_of(16 + r * 3 + j)
+            d.polygon((P(-12, yc + 2.35, z), P(-12, yc + 2.35, z + 4), P(-12, yc - 2.35, z + 4), P(-12, yc - 2.35, z)), fill=mix(col, side, 0.2))
     a, b = P(-30, 22, 34), P(-12, 0, 34)
     rect(a, b, wall)
     d.rectangle((0, a[1] - 3, b[0] + 2, a[1] + 2), fill=sh("#8f7a63"))
-    for r in range(4):
-        y0 = 5.6 + 3.95 * r
-        fl = P(0, y0 - 0.5, 34)[1]
-        d.line((0, fl, b[0], fl), fill=mix(wall, DARK, 0.18))
+    frame = mix(wall, DARK, 0.4)
+    for r, yc in enumerate((6.9, 13.2, 19.5)):                  # tall windows, each with its own evening
+        fl = P(0, yc - 3.1, 34)[1]
+        d.rectangle((0, fl, b[0], fl + 1), fill=mix(wall, DARK, 0.2))
         for c in range(4):
             on, pane, ph, who, kind = pane_of(r * 4 + c)
-            p0, p1 = P(-28.1 + 4.3 * c, y0 + 3.2, 34), P(-25.7 + 4.3 * c, y0, 34)
-            x0, y0s, x1, y1s = int(p0[0]), int(p0[1]), int(p1[0]), int(p1[1])
-            d.rectangle((x0 - 2, y0s - 2, x1 + 2, y1s + 2), fill=mix(wall, DARK, 0.3))
-            d.rectangle((x0, y0s, x1, y1s), fill=pane)
-            d.rectangle((x0, y0s, x0 + (6 if kind > 0.5 else 3), y1s), fill=mix(pane, "#b0503c" if who > 0.5 else "#3f7f6a", 0.55))
-            d.line(((x0 + x1) // 2, y0s, (x0 + x1) // 2, y1s), fill=mix(wall, DARK, 0.3))
-            if on and who > 0.6:                                # somebody is home
-                bob = int(math.sin(t * 0.6 + ph) * 3)
-                d.rectangle((x0 + 10 + bob, y0s + 9, x0 + 15 + bob, y1s), fill="#2a2030")
-                d.ellipse((x0 + 10 + bob, y0s + 4, x0 + 15 + bob, y0s + 9), fill="#2a2030")
+            p0, p1 = P(-28.4 + 4.25 * c, yc + 2.35, 34), P(-25.0 + 4.25 * c, yc - 2.35, 34)
+            x0, y0, x1, y1 = int(p0[0]), int(p0[1]), int(p1[0]), int(p1[1])
+            mid = (x0 + x1) // 2
+            tv = on and 0.33 < who <= 0.66
+            if tv:                                              # the television is on
+                pane = mix("#4f8fe0", "#cfe6ff", 0.5 + 0.5 * math.sin(t * 7 + ph) * math.sin(t * 2.3 + ph))
+            d.rectangle((x0 - 3, y0 - 3, x1 + 3, y1 + 3), fill=frame)
+            d.rectangle((x0, y0, x1, y1), fill=pane)
+            cur = sh("#b0503c" if kind > 0.5 else "#3f7f6a", 0.3)
+            d.rectangle((x0, y0, x0 + 5, y1), fill=cur)
+            d.rectangle((x1 - 5, y0, x1, y1), fill=cur)
+            if on and who > 0.66:                               # somebody is home
+                bob = int(math.sin(t * 0.5 + ph) * 4)
+                d.ellipse((mid - 4 + bob, y0 + 9, mid + 4 + bob, y0 + 17), fill="#2a2030")
+                d.rectangle((mid - 7 + bob, y0 + 18, mid + 7 + bob, y1), fill="#2a2030")
+            elif on and not tv:                                 # a lamp left on
+                d.line((mid, y0, mid, y0 + 7), fill="#2a2030")
+                d.ellipse((mid - 4, y0 + 7, mid + 4, y0 + 15), fill="#fffbe6")
+            d.rectangle((mid - 1, y0, mid, y1), fill=frame)
             if kind < 0.4:                                      # a flower box
-                d.rectangle((x0 - 2, y1s + 1, x1 + 2, y1s + 4), fill=sh("#6b4a35"))
-                for fx2 in range(x0, x1, 4):
-                    d.rectangle((fx2, y1s - 1, fx2 + 1, y1s), fill=sh("#e85a71" if (fx2 + c) % 3 else "#ffd166", 0.4))
+                d.rectangle((x0 - 3, y1 - 1, x1 + 3, y1 + 4), fill=sh("#6b4a35"))
+                for fx2 in range(x0 - 1, x1, 5):
+                    d.rectangle((fx2, y1 - 5, fx2 + 2, y1 - 2), fill=sh("#e85a71" if (fx2 + c) % 2 else "#ffd166", 0.35))
+            elif kind > 0.75:                                   # a balcony rail
+                d.rectangle((x0 - 4, y1 - 9, x1 + 4, y1 - 7), fill="#2a2d3c")
+                for bx2 in range(x0 - 4, x1 + 5, 5):
+                    d.line((bx2, y1 - 9, bx2, y1 + 3), fill="#2a2d3c")
     a = P(-30, 4.7, 34)
     d.rectangle((0, a[1], b[0], b[1]), fill=sh("#6d4f43"))      # the shops at street level
     shop = mix("#26314a", "#ffe2a0", 0.15 + 0.75 * dusk)

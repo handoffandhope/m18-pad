@@ -119,7 +119,7 @@ Read one before you write. Your scene should hold up next to it in `--far`.
 
 - [scenes/city.py](../scripts/m18/scenes/city.py): *the bars are a frame.* One view through a window,
   in perspective, nothing lined up with the keys. Every number has one big carrier (a 14 px sight
-  glass, a 34 px clock face, furnace windows, smoke, a stack of containers), and the small things
+  glass, a 34 px clock face, furnace windows, smoke, a yard of painted bays filling with containers), and the small things
   (flower boxes, a cat's ear twitch, pigeons on the hour) sit on top of shapes that read without them.
 - [scenes/marbles.py](../scripts/m18/scenes/marbles.py): *one thing per key.* Fifteen marbles, one
   session each, state shown by motion, lift and glow.
