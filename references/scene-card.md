@@ -85,6 +85,12 @@ per running agent session); `m18ctl signals` marks those.
     If you cannot name each gauge and its level in that picture, make it bigger and plainer.
 - Map each signal to something a person can see change: count, size, speed, colour, position.
   Say which is which in the docstring.
+- **Show how long, as well as how much.** A five-second spike and a five-minute job give the same
+  reading, and the long one is the one that matters. Let quick things follow the reading (a glow, a
+  speed). Make anything that asks for attention (an alarm colour, a zoom, a flash) wait until the
+  number has stayed over its line: count the seconds in `state`, and forgive a dip of a few seconds.
+  Where you can, leave a trace whose size is the duration, such as smoke that stays in the sky.
+  `remember` in [scenes/city.py](../scripts/m18/scenes/city.py) does all three.
 - Move things with `t` (`x = (t * 40) % W`), and ease state toward a signal a little each frame
   so nothing jumps.
 - `draw` runs up to 20 times a second: build lists and backgrounds in `setup`, loop over a few

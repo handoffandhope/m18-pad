@@ -3,19 +3,23 @@ the bars between them are the glazing bars, so nothing is lined up with them: a 
 horizon in perspective, and towers, traffic and smoke pass behind the bars as they would behind a window.
 
 cpu          the power plant, right: furnace doors glow hotter, roof fans spin faster, its chimneys smoke
-             harder, and above 90 % they flare. A stoker walks the doors faster.
+             harder. A stoker walks the doors faster. The smoke stays in the sky for four and a half
+             minutes and drifts one pane a minute: a spike is a puff, a long job is a band. After half
+             a minute above 85 % the chimneys flare.
 ram          the water tank on a roof, left: its sight glass fills, red above 90 %. Above 60 % it rains
-             and the drops run down the glass; above 90 % there is lightning.
-net          traffic on the boulevard (light trails at night), the rings from the tower downtown and
-             the lamps lit up its shaft, and how fast the searchlights sweep.
+             and the drops run down the glass; after half a minute above 90 % there is lightning. When
+             the rain stops by day there is a rainbow while the streets dry.
+net          the rings from the tower downtown, the lamps lit up its shaft and how fast the searchlights
+             sweep; traffic on the boulevard (light trails at night) follows the last twenty seconds.
 disk         the container yard below: a gantry crane sets a container down for every 5 %, and waits a
              moment for the lens before it does.
 time_of_day  the clock tower, the sun and moon, the light on the walls, how many windows are still lit.
              Pigeons leave the tower on the hour; at night there are fireworks instead.
 
-A cat sits on the sill. It is the one who notices things: when a number crosses a line, or the hour
-strikes, the cat turns its head and the view zooms in to what it is looking at, with the number on a
-plate. Tap a pane to zoom to what you see in it; tap again to come back. Left alone, the view visits
+A cat sits on the sill. It is the one who notices things: when a number has stayed over its line for
+half a minute (page option `patience: 30`; a spike does not count), or the hour strikes, the cat turns its
+head and the view zooms in to what it is looking at, with the number on a plate and how long it has
+lasted. Tap a pane to zoom to what you see in it; tap again to come back. Left alone, the view visits
 one place a minute (page option `tour: 90` changes the pause, `tour: 0` stops it).
 
 A zoom is the same picture through a longer lens, so every place is drawn once in the wide picture's
@@ -24,7 +28,7 @@ daylight, in three layers (sky, far city, near city) so the train can run betwee
 import math
 import random
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageColor, ImageDraw
 
 from m18lib.scene import H, W, key_box, mix, ramp, text
 
@@ -43,6 +47,7 @@ PANE = ["time_of_day", "time_of_day", "time_of_day", "net", "cpu",      # what e
         "disk", "disk", "disk", "net", "cpu"]
 ALARM = {"cpu": 0.85, "ram": 0.9, "net": 0.8}                   # crossing one of these gets the cat's attention
 MOVE, NOTICE = 0.9, 0.5                                         # seconds: a zoom, and the cat's look before it
+DRIFT = 94 / 60                                                 # old smoke crosses one pane a minute
 DARK = "#0a0c1a"
 PAL = ["#c9a88a", "#8a4b3a", "#b9a58c", "#9c95a8", "#a3856b", "#7d8597", "#c7b8a0", "#96705a", "#b0b5c0"]
 GLASS = ["#3f6f93", "#4f86a8", "#2f5f86", "#5a8fa0"]
@@ -132,7 +137,7 @@ def setup(state):
         x0, y0, _, _ = key_box(k)
         g.polygon(((x0 + 40, y0), (x0 + 52, y0), (x0 + 16, y0 + 64), (x0 + 4, y0 + 64)), fill=16)
         g.polygon(((x0 + 57, y0), (x0 + 61, y0), (x0 + 25, y0 + 64), (x0 + 21, y0 + 64)), fill=9)
-    state.update(glare=glare, ease={}, cache={}, cam=None, tick=(None, 0.0), cat=0.0, airship=-99.0,
+    state.update(glare=glare, ease={}, cache={}, cam=None, tick=(None, 0.0), past=None, cat=0.0, airship=-99.0,
                  yard={"have": None, "job": None, "gx": -55.0, "gz": 93.0, "news": None})
 
 
@@ -339,6 +344,33 @@ def layers(state, v, L, fine=True):
     return sky, land, near
 
 
+# ---------------------------------------------------------------- how long it has been going on
+
+def remember(t, state, vals):
+    """A spike and a long peak show the same number, so the city keeps time: how many seconds each number
+    has stayed over its line, how the traffic has run lately, how wet the streets are, and a puff of the
+    plant's smoke for every three seconds of the last four and a half minutes."""
+    m = state["past"]
+    if m is None or not 0 <= t - m["t"] < 5:                    # first frame, or another page was showing
+        keep = m or {"held": dict.fromkeys(ALARM, 0.0), "dip": dict.fromkeys(ALARM, 0.0), "flow": vals["net"],
+                     "wet": 0.0, "smoke": [], "puff": -9.0}
+        m = state["past"] = {**keep, "t": t}
+    dt, m["t"] = t - m["t"], t
+    for n, th in ALARM.items():
+        if vals[n] > th:
+            m["held"][n], m["dip"][n] = m["held"][n] + dt, 0.0
+        else:                                                   # a dip of a few seconds does not end a peak; eight do
+            m["dip"][n] += dt
+            if m["dip"][n] > 8:
+                m["held"][n] = 0.0
+    m["flow"] += (vals["net"] - m["flow"]) * min(1.0, dt / 20)
+    m["wet"] = min(1.0, m["wet"] + dt / 40) if vals["ram"] > 0.6 else max(0.0, m["wet"] - dt / 90)
+    if not 0 <= t - m["puff"] < 3:
+        m["puff"] = t
+        m["smoke"] = [q for q in m["smoke"] if 0 <= t - q[0] < 270] + [(t, vals["cpu"])]
+    return m
+
+
 # ---------------------------------------------------------------- who decides where to look
 
 def camera(t, state, vals, since):
@@ -366,8 +398,9 @@ def camera(t, state, vals, since):
         if name == "wide":
             c["home"] = t + MOVE
 
-    for n, th in ALARM.items():
-        if vals[n] < th - 0.12:
+    held, patience = state["past"]["held"], float(state["opts"].get("patience", 30) or 0)
+    for n in ALARM:
+        if held[n] == 0:
             c["armed"][n] = True
     if since > 60:
         c["hour"] = False
@@ -385,7 +418,7 @@ def camera(t, state, vals, since):
         elif state["yard"]["news"] is not None:
             want = "disk"
         else:
-            want = next((n for n, th in ALARM.items() if vals[n] > th and c["armed"].get(n)), None)
+            want = next((n for n in ALARM if held[n] > patience and c["armed"].get(n)), None)   # not a spike: it stayed
         if want in ALARM:
             c["armed"][want] = False
         if want:
@@ -445,6 +478,8 @@ def draw(im, d, s, t, state):
     cpu, ram, net, disk = vals["cpu"], vals["ram"], vals["net"], vals["disk"]
     since = ((day * 24) % 1.0) * 3600                           # seconds past the hour
     load = crane(t, state, disk)
+    past = remember(t, state, vals)
+    held, patience = past["held"], float(state["opts"].get("patience", 30) or 0)
     m, cx, cy, moving, noticing, arrived = camera(t, state, vals, since)
     cam = state["cam"]
     v, M = View(m, cx, cy), m
@@ -475,6 +510,25 @@ def draw(im, d, s, t, state):
         R *= 1 + L.wet
         d.ellipse((c[0] - R, c[1] - R * 0.4, c[0] + R, c[1] + R * 0.4), fill=col)
         d.ellipse((c[0] - R * 0.3, c[1] - R * 0.7, c[0] + R * 0.6, c[1] + R * 0.25), fill=col)
+    bow = past["wet"] * (1 - L.dusk * 2.5) if rain == 0 else 0.0
+    trail = [(t - t0, c) for t0, c in past["smoke"] if c > 0.3]
+    if trail or bow > 0.02:                                     # soft things: drawn at half size and laid over the sky
+        veil = Image.new("RGBA", (W // 2, H // 2), (0, 0, 0, 0))
+        dv = ImageDraw.Draw(veil)
+        if bow > 0.02:                                          # the rain stopped and the streets are still wet
+            c = at(150, 128)
+            for i, col in enumerate(("#ff5a5a", "#ffb04a", "#ffe95a", "#6fdc7a", "#5aa8ff", "#a57aff")):
+                r = (118 - i * 3) * M
+                dv.arc((c[0] / 2 - r / 2, c[1] / 2 - r / 2, c[0] / 2 + r / 2, c[1] / 2 + r / 2), 180, 360,
+                       fill=(*ImageColor.getrgb(col), int(150 * min(1.0, bow))), width=max(2, round(1.6 * M)))
+        for age, c in trail:                                    # the plant's last minutes: the oldest smoke is furthest left
+            x, y = at(400 - age * DRIFT, 21 - 7 * (1 - math.exp(-age / 25)) + 4 * math.sin(age / 31 + c * 40))
+            r, dark = (6 + 7 * c + age * 0.02) * M, (c - 0.3) / 0.7
+            a = 230 * min(1.0, dark * 1.6) * min(1.0, (270 - age) / 40)
+            dv.ellipse((x / 2 - r / 2, y / 2 - r * 0.36, x / 2 + r / 2, y / 2 + r * 0.36),
+                       fill=(*mix(mix("#dcdce6", "#3a3d4c", dark), L.top, 0.2)[:3], int(a)))
+        veil = veil.resize((W, H), Image.BILINEAR)
+        im.paste(veil, (0, 0), veil)
     if L.night > 0.7 and t % 37 < 0.5:                          # a shooting star
         p, x0 = (t % 37) / 0.5, 110 + int(t / 37) * 53 % 200
         d.line((*at(x0 + p * 60, 6 + p * 20), *at(x0 + p * 60 - 20, p * 20)), fill=mix(L.top, "#ffffff", 1 - p), width=px(1))
@@ -499,7 +553,7 @@ def draw(im, d, s, t, state):
                 if a < 0.3:
                     c = at(ox, oy)
                     d.ellipse((c[0] - 7 * M, c[1] - 7 * M, c[0] + 7 * M, c[1] + 7 * M), fill="#ffffff")
-    storm = ram > 0.9 and (int(t / 1.3) * 7919 % 5 == 0) and t % 1.3 < 0.3
+    storm = held["ram"] > patience and (int(t / 1.3) * 7919 % 5 == 0) and t % 1.3 < 0.3      # a storm takes a while to build
     if storm:                                                   # lightning, somewhere over the city
         rnd = random.Random(int(t / 1.3))
         x, pts = rnd.randrange(40, W - 40), []
@@ -588,7 +642,7 @@ def draw(im, d, s, t, state):
         r, col = (6 + 22 * p) * M, mix(mix("#0b4fd0", "#7df9ff", L.night), L.top, p * 0.8)
         d.arc((tip[0] - r, tip[1] - r, tip[0] + r, tip[1] + r), 315, 45, fill=col, width=px(3))
         d.arc((tip[0] - r, tip[1] - r, tip[0] + r, tip[1] + r), 135, 225, fill=col, width=px(3))
-    n = 6 + int(net * (len(state["cars"]) - 6))
+    n = 6 + int(past["flow"] * (len(state["cars"]) - 6))        # a road fills slowly: the last twenty seconds or so
     cars = []
     for q, (ph, col) in enumerate(state["cars"][:n]):
         away = q % 2
@@ -724,7 +778,7 @@ def draw(im, d, s, t, state):
             c = (top[0] + (-(8 + 12 * wind) * p + 3 * math.sin(t + i)) * M, top[1] - (4 + (20 + 30 * cpu) * p) * M)
             r = (3 + 5 * cpu + (3 + 8 * cpu) * p) * M
             d.ellipse((c[0] - r, c[1] - r, c[0] + r, c[1] + r), fill=mix(mix("#e2e2ea", "#4a4d5e", cpu), mix(L.top, L.low, 0.2), p * 0.8))
-        if cpu > 0.9:                                           # flaring
+        if held["cpu"] > patience:                                  # run hot this long and they flare
             fh = (9 + 5 * math.sin(t * 13 + cx)) * M
             d.polygon(((top[0] - 3.5 * M, top[1]), (top[0] + 2 * M * math.sin(t * 9), top[1] - fh), (top[0] + 3.5 * M, top[1])), fill="#ff8a1f")
             d.polygon(((top[0] - 1.8 * M, top[1]), (top[0], top[1] - fh * 0.55), (top[0] + 1.8 * M, top[1])), fill="#fff2b0")
@@ -812,7 +866,9 @@ def draw(im, d, s, t, state):
             d.line((x0 + 4, y0 + 32, x0 + 59, y0 + 32), fill="#ffc46b", width=3)
         else:                                                   # the whole pane, so it reads from the chair
             d.rounded_rectangle((x0 + 1, y0 + 1, x0 + 62, y0 + 62), 7, fill="#0a0c18", outline="#ffc46b", width=2)
-            text(d, (x0 + 32, y0 + 15), sig.label, 13, "#aab3d6")
+            over = held.get(cam["shot"], 0.0)                   # and for how long, once it is no spike
+            for_ = "" if over < 10 else f" {int(over // 60)}m" if over >= 60 else f" {int(over)}s"
+            text(d, (x0 + 32, y0 + 15), sig.label + for_, 13, "#aab3d6")
             text(d, (x0 + 32, y0 + 41), value, 26 if len(value) <= 3 else 22 if len(value) == 4 else 21)
     d.rectangle((0, H - 9, W, H), fill=mix("#4a342a", DARK, 0.3 + 0.4 * L.night))
     d.line((0, H - 9, W, H - 9), fill=mix("#7a5a48", DARK, 0.3 + 0.4 * L.night))

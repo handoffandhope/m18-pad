@@ -242,16 +242,20 @@ def city(t, film):
 
 
 def city_zoom(t, film):
-    """An afternoon. The load passes 85 % and the cat turns to the power plant, so the view goes there. A tap
-    comes back; a tap on the yard goes to the crane, which waits for the lens before it sets a container down."""
-    u = max(0.0, t)
-    cpu = 0.4 + 0.55 * _ease((u - 0.8) / 0.6) * (1 - _ease((u - 4.8) / 1.0))
-    disk = 0.62 if u < 6.2 else 0.66
-    film.pin(time_of_day=0.63 + u / 86400, cpu=cpu, net=0.55, ram=0.4, disk=disk)
+    """An afternoon, four minutes of it before the clip starts. The sky holds them: a five-second spike is one
+    puff far left, a minute's work is the band in the middle. Now the load has stayed over 85 % for half a
+    minute, so the cat turns to the power plant and the view goes there. A tap comes back; a tap on the yard
+    goes to the crane, which waits for the lens before it sets a container down."""
+    cpu = 0.25
+    for start, end, level in ((-228, -223, 0.95), (-160, -100, 0.9), (-29.5, 4.8, 0.95)):
+        cpu += (level - 0.25) * _ease((t - start) / 0.6) * (1 - _ease((t - end) / 1.0))
+    disk = 0.62 if t < 6.2 else 0.66
+    film.pin(time_of_day=0.63 + t / 86400, cpu=cpu, net=0.55, ram=0.4, disk=disk)
     for when, key in ((5.0, 9), (6.4, 12), (11.8, 12)):
         if abs(t - when) < 0.01:
             film.tap(key)
-    return f"CPU {cpu * 100:.0f}%   disk {disk * 100:.0f}%"
+    lasted = f" for {t + 29:.0f} s" if -29 < t < 5.3 else ""
+    return f"CPU {cpu * 100:.0f}%{lasted}   disk {disk * 100:.0f}%"
 
 
 def marbles(t, film):
@@ -268,7 +272,7 @@ CLIPS = {
     "limit": lambda: record(ROOT / "gallery" / "limit.gif", Film("fishbowl", FIX), limit, 9, warm=25, width=720),
     "night": lambda: record(ROOT / "gallery" / "night.gif", Film("fishbowl", FIX), night, 7, warm=25, width=720),
     "city": lambda: record(ROOT / "gallery" / "city.gif", Film("city"), city, 11, fps=10, warm=3, width=720),
-    "zoom": lambda: record(ROOT / "gallery" / "city-zoom.gif", Film("city"), city_zoom, 13.5, fps=10, warm=3, width=720),
+    "zoom": lambda: record(ROOT / "gallery" / "city-zoom.gif", Film("city", {"tour": 0}), city_zoom, 13.5, fps=10, warm=240, width=720),
 }
 
 if __name__ == "__main__":

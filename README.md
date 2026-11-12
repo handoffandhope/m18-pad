@@ -36,7 +36,7 @@ lined up with them. You look out over a district from about twenty floors up, an
 smoke pass behind the bars the way they do behind a real window.
 
 The view is your computer. The power plant on the right is the CPU: its furnace doors glow hotter, its
-roof fans spin faster and its chimneys smoke harder, and above 90 % they flare. Memory is the water
+roof fans spin faster and its chimneys smoke harder. Memory is the water
 tank on the roof across the way, and when it runs tight it rains and the drops run down the glass, pane
 by pane. Network is the traffic on the boulevard, the rings from the tower downtown and the speed of
 the searchlights. Disk is the container yard below, where a gantry crane sets a container down for
@@ -45,11 +45,20 @@ of lit windows follow it. Pigeons leave the tower on the hour, and at night ther
 instead. A train crosses the viaduct, barges go down the river, and the big wheel and the airship are
 there because a city has them.
 
-![The same view by day. The CPU passes 85 %, the cat turns its head and the view zooms in on the power plant: flames behind the furnace doors, roof fans spinning, a plate reading CPU 95 %. A tap returns to the wide view; a tap on the yard zooms in on the gantry crane as it sets a container down.](gallery/city-zoom.gif)
+The city also keeps time, because a five-second spike and a five-minute job show the same number.
+Quick things follow the reading: the furnace glow, the fans, the rings from the tower. Slow things
+wait. The plant's smoke stays in the sky for four and a half minutes and drifts one pane a minute, so
+a spike is a single puff and a long job is a band across the window. The chimneys flare only once the
+CPU has stayed above 85 % for half a minute, and lightning needs memory above 90 % for as long. The
+road fills with the traffic of the last twenty seconds or so. When the rain stops by day there is a
+rainbow while the streets dry.
 
-A cat sits on the sill, and it is the one who notices things. When the CPU passes 85 %, memory 90 % or
-network 80 %, when the hour strikes or the crane has a container to move, the cat turns its head and
-the view zooms in on what it is looking at, with the number on a plate. A zoom is the same picture
+![The same view by day, with four minutes of smoke in the sky: one puff far left from a spike, a band in the middle from a minute's work. The CPU has now been above 85 % for half a minute, so the chimneys flare, the cat turns its head and the view zooms in on the power plant: flames behind the furnace doors, roof fans spinning, a plate reading CPU 32s, 95 %. A tap returns to the wide view; a tap on the yard zooms in on the gantry crane as it sets a container down.](gallery/city-zoom.gif)
+
+A cat sits on the sill, and it is the one who notices things. When the CPU has stayed above 85 %, memory above 90 % or network above 80 % for half a minute (`patience`
+in the page's options), when the hour strikes or the crane has a container to move, the cat turns its
+head and the view zooms in on what it is looking at. A plate shows the number and how long it has
+been that high. A zoom is the same picture
 through a longer lens, so things show up that are too small to draw from far away: the fire behind the
 furnace doors, the marks on the sight glass, the second hand of the clock, the ribs on the containers.
 Tap a pane to zoom in on what you see in it, and tap again to come back. Left alone, the view visits
