@@ -27,18 +27,21 @@ creatures and all, and the ice thins as the reset gets closer.
 After 21:00 the tank goes dark and the lamp in the corner is what is left. The creatures glow
 faintly, so you can still see who is moving.
 
-## A city block where every building is a gauge
+## A city through the window
 
-![Five different buildings, one per column of keys: a power plant, apartments under a water tank, a telecom tower, a container yard and a clock tower. Dusk falls, windows light, cars pass.](gallery/city.gif)
+![A city seen from a few floors up, through the pad's fifteen screens as window panes: an avenue runs to a clock tower, a power plant smokes, containers stack up in a yard, and a cat watches from the sill.](gallery/city.gif)
 
-Five buildings, one per column of keys, and the bars between the screens are the alleys between them.
-Each one shows its number the way that building would. CPU is a power plant: the furnace arches glow
-hotter and the chimneys smoke harder. Memory is the water tank on the apartments' roof, and it drips
-when it is nearly full. Network is a telecom tower whose mast sends out more rings. Disk is a container
-yard where the stack grows toward the crane. The fifth is a clock tower, and its bell swings on the hour.
+The fifteen screens are panes of one window and the bars between them are its glazing bars. Nothing is
+lined up with them. You look down an avenue from a few floors up, and buildings, cars and smoke pass
+behind the bars the way they do behind a real window.
 
-At dusk the street lamps come on and people in the apartments switch their lights on at their own
-hours. There is a cat on the roof. Tap a building and it shows the number.
+The view is your computer. The power plant across the street is the CPU: its furnace windows glow
+hotter, the chimneys smoke harder, the cooling tower steams. Memory is the water tank on the roof next
+door, and when it runs tight it rains and the drops run down the glass, pane by pane. Network is the
+traffic on the avenue. Disk is the container yard below, where the stacks grow. The clock tower at the
+end of the avenue keeps the time, and pigeons leave it on the hour.
+
+A cat sits on the sill and watches the street. Tap a pane and it shows the number of what you see in it.
 
 Claude Haiku 5.5 wrote the first version of this city in under three minutes from one paragraph and
 a one-page manual. The [prompt, the file it wrote and what it cost](gallery/city/) are all here.
