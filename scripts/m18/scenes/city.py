@@ -4,11 +4,12 @@ horizon in perspective, and towers, traffic and smoke pass behind the bars as th
 
 cpu          the power plant, right: furnace doors glow hotter, roof fans spin faster, its chimneys smoke
              harder. A stoker walks the doors faster. The smoke stays in the sky for four and a half
-             minutes and drifts one pane a minute: a spike is a puff, a long job is a band. After half
+             minutes and drifts one pane a minute: a spike is a pale wisp, a long job a brown band with
+             a red sun behind it. After half
              a minute above 85 % the chimneys flare.
 ram          the water tank on a roof, left: its sight glass fills, red above 90 %. Above 60 % it rains
              and the drops run down the glass; after half a minute above 90 % there is lightning. When
-             the rain stops by day there is a rainbow while the streets dry.
+             the rain stops by day there is a rainbow, away from the sun, while the streets dry.
 net          the rings from the tower downtown, the lamps lit up its shaft and how fast the searchlights
              sweep; traffic on the boulevard (light trails at night) follows the last twenty seconds.
 disk         the container yard below: a gantry crane sets a container down for every 5 %, and waits a
@@ -47,6 +48,7 @@ PANE = ["time_of_day", "time_of_day", "time_of_day", "net", "cpu",      # what e
         "disk", "disk", "disk", "net", "cpu"]
 ALARM = {"cpu": 0.85, "ram": 0.9, "net": 0.8}                   # crossing one of these gets the cat's attention
 MOVE, NOTICE = 0.9, 0.5                                         # seconds: a zoom, and the cat's look before it
+SOOT = "#54402f"                                                # the plant's smoke is brown, the clouds are not
 DRIFT = 94 / 60                                                 # old smoke crosses one pane a minute
 DARK = "#0a0c1a"
 PAL = ["#c9a88a", "#8a4b3a", "#b9a58c", "#9c95a8", "#a3856b", "#7d8597", "#c7b8a0", "#96705a", "#b0b5c0"]
@@ -352,7 +354,7 @@ def remember(t, state, vals):
     plant's smoke for every three seconds of the last four and a half minutes."""
     m = state["past"]
     if m is None or not 0 <= t - m["t"] < 5:                    # first frame, or another page was showing
-        keep = m or {"held": dict.fromkeys(ALARM, 0.0), "dip": dict.fromkeys(ALARM, 0.0), "flow": vals["net"],
+        keep = m or {"held": dict.fromkeys(ALARM, 0.0), "dip": dict.fromkeys(ALARM, 0.0), "flow": vals["net"], "burn": vals["cpu"],
                      "wet": 0.0, "smoke": [], "puff": -9.0}
         m = state["past"] = {**keep, "t": t}
     dt, m["t"] = t - m["t"], t
@@ -364,10 +366,11 @@ def remember(t, state, vals):
             if m["dip"][n] > 8:
                 m["held"][n] = 0.0
     m["flow"] += (vals["net"] - m["flow"]) * min(1.0, dt / 20)
+    m["burn"] += (vals["cpu"] - m["burn"]) * min(1.0, dt / 15)       # what goes up the chimney: a spike is a pale wisp
     m["wet"] = min(1.0, m["wet"] + dt / 40) if vals["ram"] > 0.6 else max(0.0, m["wet"] - dt / 90)
     if not 0 <= t - m["puff"] < 3:
         m["puff"] = t
-        m["smoke"] = [q for q in m["smoke"] if 0 <= t - q[0] < 270] + [(t, vals["cpu"])]
+        m["smoke"] = [q for q in m["smoke"] if 0 <= t - q[0] < 270] + [(t, m["burn"])]
     return m
 
 
@@ -515,20 +518,27 @@ def draw(im, d, s, t, state):
     if trail or bow > 0.02:                                     # soft things: drawn at half size and laid over the sky
         veil = Image.new("RGBA", (W // 2, H // 2), (0, 0, 0, 0))
         dv = ImageDraw.Draw(veil)
-        if bow > 0.02:                                          # the rain stopped and the streets are still wet
-            c = at(150, 128)
+        u = (L.day * 24 - 6) / 12                               # where the sun is, when it is up
+        sun, sr = at(W * (0.93 - 0.86 * u), HOR + 4 - 60 * math.sin(u * math.pi)) if 0 < u < 1 else None, (11 + 3 * L.gold) * M
+        for age, c in trail:                                    # the plant's last minutes: the oldest smoke is furthest left
+            x, y = at(400 - age * DRIFT, 21 - 7 * (1 - math.exp(-age / 25)) + 4 * math.sin(age / 31 + c * 40))
+            r, dark = (8 + 9 * c + age * 0.02) * M, (c - 0.3) / 0.7
+            a = 230 * min(1.0, dark * 1.6) * min(1.0, (270 - age) / 40)
+            dv.ellipse((x / 2 - r / 2, y / 2 - r * 0.26, x / 2 + r / 2, y / 2 + r * 0.26),    # flat and brown: no cloud
+                       fill=(*mix(mix("#dcd8d6", SOOT, dark), L.top, 0.1)[:3], int(a)))
+        over = [(sun[0] + i * sr / 2, sun[1] + j * sr / 2) for i, j in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1))] if sun else []
+        thick = sum(veil.getpixel((int(x / 2), int(y / 2)))[3] for x, y in over if 0 <= x < W - 1 and 0 <= y < H - 1) / 1275
+        if bow > 0.02:                                          # the rain stopped and the streets are still wet:
+            c = at(150 if u < 0.5 else 290, 128)                # a rainbow, on the side away from the sun
             for i, col in enumerate(("#ff5a5a", "#ffb04a", "#ffe95a", "#6fdc7a", "#5aa8ff", "#a57aff")):
                 r = (118 - i * 3) * M
                 dv.arc((c[0] / 2 - r / 2, c[1] / 2 - r / 2, c[0] / 2 + r / 2, c[1] / 2 + r / 2), 180, 360,
                        fill=(*ImageColor.getrgb(col), int(150 * min(1.0, bow))), width=max(2, round(1.6 * M)))
-        for age, c in trail:                                    # the plant's last minutes: the oldest smoke is furthest left
-            x, y = at(400 - age * DRIFT, 21 - 7 * (1 - math.exp(-age / 25)) + 4 * math.sin(age / 31 + c * 40))
-            r, dark = (6 + 7 * c + age * 0.02) * M, (c - 0.3) / 0.7
-            a = 230 * min(1.0, dark * 1.6) * min(1.0, (270 - age) / 40)
-            dv.ellipse((x / 2 - r / 2, y / 2 - r * 0.36, x / 2 + r / 2, y / 2 + r * 0.36),
-                       fill=(*mix(mix("#dcdce6", "#3a3d4c", dark), L.top, 0.2)[:3], int(a)))
         veil = veil.resize((W, H), Image.BILINEAR)
         im.paste(veil, (0, 0), veil)
+        if thick > 0.1 and L.wet < 0.5:                         # the sun behind smoke is a red disc, as over a fire
+            d.ellipse((sun[0] - sr, sun[1] - sr, sun[0] + sr, sun[1] + sr),
+                      fill=mix(mix(mix("#fff3c4", "#ff7a3c", L.gold), "#ff4d2e", min(1.0, thick * 1.5)), SOOT, 0.3 * thick))
     if L.night > 0.7 and t % 37 < 0.5:                          # a shooting star
         p, x0 = (t % 37) / 0.5, 110 + int(t / 37) * 53 % 200
         d.line((*at(x0 + p * 60, 6 + p * 20), *at(x0 + p * 60 - 20, p * 20)), fill=mix(L.top, "#ffffff", 1 - p), width=px(1))
@@ -777,7 +787,7 @@ def draw(im, d, s, t, state):
             p = (t * (0.06 + 0.4 * cpu) + i / n + cx) % 1.0
             c = (top[0] + (-(8 + 12 * wind) * p + 3 * math.sin(t + i)) * M, top[1] - (4 + (20 + 30 * cpu) * p) * M)
             r = (3 + 5 * cpu + (3 + 8 * cpu) * p) * M
-            d.ellipse((c[0] - r, c[1] - r, c[0] + r, c[1] + r), fill=mix(mix("#e2e2ea", "#4a4d5e", cpu), mix(L.top, L.low, 0.2), p * 0.8))
+            d.ellipse((c[0] - r, c[1] - r, c[0] + r, c[1] + r), fill=mix(mix("#e2e2ea", SOOT, cpu), mix(L.top, L.low, 0.2), p * 0.8))
         if held["cpu"] > patience:                                  # run hot this long and they flare
             fh = (9 + 5 * math.sin(t * 13 + cx)) * M
             d.polygon(((top[0] - 3.5 * M, top[1]), (top[0] + 2 * M * math.sin(t * 9), top[1] - fh), (top[0] + 3.5 * M, top[1])), fill="#ff8a1f")
@@ -867,9 +877,13 @@ def draw(im, d, s, t, state):
         else:                                                   # the whole pane, so it reads from the chair
             d.rounded_rectangle((x0 + 1, y0 + 1, x0 + 62, y0 + 62), 7, fill="#0a0c18", outline="#ffc46b", width=2)
             over = held.get(cam["shot"], 0.0)                   # and for how long, once it is no spike
-            for_ = "" if over < 10 else f" {int(over // 60)}m" if over >= 60 else f" {int(over)}s"
-            text(d, (x0 + 32, y0 + 15), sig.label + for_, 13, "#aab3d6")
-            text(d, (x0 + 32, y0 + 41), value, 26 if len(value) <= 3 else 22 if len(value) == 4 else 21)
+            if over < 10:
+                text(d, (x0 + 32, y0 + 15), sig.label, 13, "#aab3d6")
+                text(d, (x0 + 32, y0 + 41), value, 26 if len(value) <= 3 else 22 if len(value) == 4 else 21)
+            else:
+                text(d, (x0 + 32, y0 + 11), sig.label, 12, "#aab3d6")
+                text(d, (x0 + 32, y0 + 31), value, 23 if len(value) <= 3 else 20 if len(value) == 4 else 19)
+                text(d, (x0 + 32, y0 + 51), f"{int(over)}s" if over < 60 else f"{int(over // 60)}m{int(over % 60):02d}s", 15, "#ffc46b")
     d.rectangle((0, H - 9, W, H), fill=mix("#4a342a", DARK, 0.3 + 0.4 * L.night))
     d.line((0, H - 9, W, H - 9), fill=mix("#7a5a48", DARK, 0.3 + 0.4 * L.night))
     asleep = 1 <= day * 24 < 5.5 and cam["shot"] == "wide" and rain < 0.75

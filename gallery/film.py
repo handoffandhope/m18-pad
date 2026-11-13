@@ -243,7 +243,7 @@ def city(t, film):
 
 def city_zoom(t, film):
     """An afternoon, four minutes of it before the clip starts. The sky holds them: a five-second spike is one
-    puff far left, a minute's work is the band in the middle. Now the load has stayed over 85 % for half a
+    wisp far left, a minute's work is the band in the middle. Now the load has stayed over 85 % for half a
     minute, so the cat turns to the power plant and the view goes there. A tap comes back; a tap on the yard
     goes to the crane, which waits for the lens before it sets a container down."""
     cpu = 0.25

@@ -48,12 +48,12 @@ there because a city has them.
 The city also keeps time, because a five-second spike and a five-minute job show the same number.
 Quick things follow the reading: the furnace glow, the fans, the rings from the tower. Slow things
 wait. The plant's smoke stays in the sky for four and a half minutes and drifts one pane a minute, so
-a spike is a single puff and a long job is a band across the window. The chimneys flare only once the
+a spike is a pale wisp and a long job is a brown band across the window, with the sun red behind it. The chimneys flare only once the
 CPU has stayed above 85 % for half a minute, and lightning needs memory above 90 % for as long. The
 road fills with the traffic of the last twenty seconds or so. When the rain stops by day there is a
 rainbow while the streets dry.
 
-![The same view by day, with four minutes of smoke in the sky: one puff far left from a spike, a band in the middle from a minute's work. The CPU has now been above 85 % for half a minute, so the chimneys flare, the cat turns its head and the view zooms in on the power plant: flames behind the furnace doors, roof fans spinning, a plate reading CPU 32s, 95 %. A tap returns to the wide view; a tap on the yard zooms in on the gantry crane as it sets a container down.](gallery/city-zoom.gif)
+![The same view by day, with four minutes of smoke in the sky: a pale wisp far left from a spike, a band in the middle from a minute's work. The CPU has now been above 85 % for half a minute, so the chimneys flare, the cat turns its head and the view zooms in on the power plant: flames behind the furnace doors, roof fans spinning, a plate reading CPU 32s, 95 %. A tap returns to the wide view; a tap on the yard zooms in on the gantry crane as it sets a container down.](gallery/city-zoom.gif)
 
 A cat sits on the sill, and it is the one who notices things. When the CPU has stayed above 85 %, memory above 90 % or network above 80 % for half a minute (`patience`
 in the page's options), when the hour strikes or the crane has a container to move, the cat turns its
