@@ -5,8 +5,7 @@ horizon in perspective, and towers, traffic and smoke pass behind the bars as th
 cpu          the power plant, right: furnace doors glow hotter, roof fans spin faster, its chimneys smoke
              harder. A stoker walks the doors faster. The smoke stays in the sky for four and a half
              minutes and drifts one pane a minute: a spike is a pale wisp, a long job a brown band with
-             a red sun behind it. After half
-             a minute above 85 % the chimneys flare.
+             a red sun behind it. After half a minute above 85 % the chimneys flare.
 ram          the water tank on a roof, left: its sight glass fills, red above 90 %. Above 60 % it rains
              and the drops run down the glass; after half a minute above 90 % there is lightning. When
              the rain stops by day there is a rainbow, away from the sun, while the streets dry.
@@ -14,8 +13,32 @@ net          the rings from the tower downtown, the lamps lit up its shaft and h
              sweep; traffic on the boulevard (light trails at night) follows the last twenty seconds.
 disk         the container yard below: a gantry crane sets a container down for every 5 %, and waits a
              moment for the lens before it does.
+gpu          the big wheel, left of the tank: it turns faster the harder the card works.
 time_of_day  the clock tower, the sun and moon, the light on the walls, how many windows are still lit.
              Pigeons leave the tower on the hour; at night there are fireworks instead.
+
+Each reading also says what is inside it (`s.cpu.data`, see m18lib/signals.py), and the same places show
+that for whoever knows where to look. `inside` gathers it; every part falls back to the plain reading
+when the daemon has nothing to say.
+
+cores        the plant's four furnace doors are the cores, a quarter of them each, busiest in the middle
+             two (the ones the wide view shows): one hot door beside a dark one is one thread flat
+             out, which the total alone calls "6 %". Up close every core has its own flame, as tall as
+             the core is busy. The left chimney smokes brown for time spent in programs, the right
+             one steams white for time spent in the kernel (drivers, disk and network handling).
+cache        the dim hatched band above the water is memory the system holds as file cache and gives
+             back when asked: water plus band is what is occupied, water alone is what is needed. The
+             amber tube beside the glass fills as the pagefile does.
+down and up  cars driving toward the window are the download, cars driving away the upload. The tower's
+             rings on the right close in on the mast (arriving), those on the left spread out (leaving).
+disk I/O     the lamp post in the yard blinks blue for reads and orange for writes, faster for more.
+             A goods train crosses the viaduct, behind the roofs, while the disk is busy: longer for
+             more MB/s, blue and orange wagons in proportion, running right for reads, left for writes.
+gpu          a green arc inside the wheel's rim is the card's memory in use, and the hub goes from blue
+             through yellow to red between 40 and 85 degrees. Without a card the wheel just turns.
+
+A close-up hangs a second, blue-grey plate with those numbers: the busiest program and its share, cache
+and swap, down and up, read and write, VRAM and temperature.
 
 A cat sits on the sill. It is the one who notices things: when a number has stayed over its line for
 half a minute (page option `patience: 30`; a spike does not count), or the hour strikes, the cat turns its
@@ -33,20 +56,23 @@ from PIL import Image, ImageColor, ImageDraw
 
 from m18lib.scene import H, W, key_box, mix, ramp, text
 
-SIGNALS = ["cpu", "ram", "net", "disk", "time_of_day"]
+SIGNALS = ["cpu", "ram", "net", "disk", "gpu", "time_of_day"]
 FPS = 10
 RING = {"signal": "cpu", "color": "#ffc46b"}
 
 F, VX, HOR, CAM = 240.0, 314.0, 66.0, 70.0                      # lens, vanishing point, horizon, eye height
 SHOTS = {"wide": (1.0, 220.0, 126.0),                           # magnification, and the wide-picture point at centre
          "cpu": (2.0, 351.0, 180.0), "ram": (2.5, 127.0, 110.5), "net": (2.4, 325.0, 36.0),
-         "disk": (3.0, 175.0, 212.0), "time_of_day": (6.2, 219.7, 126.2)}
-PLATE = {"cpu": 6, "ram": 7, "net": 6, "disk": 4, "time_of_day": 10}     # the key the number plate hangs in
-TOUR = ["cpu", "net", "ram", "time_of_day", "disk"]
+         "disk": (3.0, 175.0, 212.0), "time_of_day": (6.2, 219.7, 126.2), "gpu": (1.6, 147.5, 112.0)}
+PLATE = {"cpu": 6, "ram": 7, "net": 6, "disk": 4, "time_of_day": 10, "gpu": 1}     # the key the number plate hangs in
+MORE = {"cpu": 1, "ram": 2, "net": 1, "disk": 5, "gpu": 7}      # and the key for the plate that says what is inside it
+TOUR = ["cpu", "net", "ram", "gpu", "time_of_day", "disk"]
 PANE = ["time_of_day", "time_of_day", "time_of_day", "net", "cpu",      # what each key looks at, keys 1..15
-        "ram", "ram", "time_of_day", "net", "cpu",
+        "gpu", "ram", "time_of_day", "net", "cpu",
         "disk", "disk", "disk", "net", "cpu"]
-ALARM = {"cpu": 0.85, "ram": 0.9, "net": 0.8}                   # crossing one of these gets the cat's attention
+ALARM = {"cpu": 0.85, "ram": 0.9, "net": 0.8, "gpu": 0.9}       # crossing one of these gets the cat's attention
+FIRE = ["#2a1614", "#a3300a", "#ff8a1f", "#fff2b0"]
+READ, WRITE = "#4f9be8", "#f08a2e"                              # what the disk gives is blue, what it takes is orange
 MOVE, NOTICE = 0.9, 0.5                                         # seconds: a zoom, and the cat's look before it
 SOOT = "#54402f"                                                # the plant's smoke is brown, the clouds are not
 DRIFT = 94 / 60                                                 # old smoke crosses one pane a minute
@@ -139,7 +165,7 @@ def setup(state):
         x0, y0, _, _ = key_box(k)
         g.polygon(((x0 + 40, y0), (x0 + 52, y0), (x0 + 16, y0 + 64), (x0 + 4, y0 + 64)), fill=16)
         g.polygon(((x0 + 57, y0), (x0 + 61, y0), (x0 + 25, y0 + 64), (x0 + 21, y0 + 64)), fill=9)
-    state.update(glare=glare, ease={}, cache={}, cam=None, tick=(None, 0.0), past=None, cat=0.0, airship=-99.0,
+    state.update(glare=glare, ease={}, cache={}, cam=None, tick=(None, 0.0), past=None, cat=0.0, airship=-99.0, train=None, wheel=0.0,
                  yard={"have": None, "job": None, "gx": -55.0, "gz": 93.0, "news": None})
 
 
@@ -154,6 +180,68 @@ def level(s, name, state=None, k=0.3):
 
 def lerp(a, b, u):
     return a + (b - a) * u
+
+
+def inside(s, vals, state, t):
+    """What is inside each number, from the `data` of its reading, and a plain guess where a reading has none:
+    the cores behind the load, the cache above the memory in use, which way the traffic goes, what the
+    disk is doing, and the graphics card's memory and heat."""
+    e = state["ease"]
+
+    def num(sig, key, default):
+        x = getattr(s, sig).data.get(key)
+        return default if isinstance(x, bool) or not isinstance(x, (int, float)) or x != x else float(x)
+
+    def eased(key, x, k=0.2):
+        x = min(1.0, max(0.0, x))
+        e[key] = e.get(key, x) + (x - e.get(key, x)) * k
+        return e[key]
+    raw = s.cpu.data.get("cores")
+    cores = sorted((min(1.0, max(0.0, float(c))) for c in (raw if isinstance(raw, (list, tuple)) else [])
+                    if isinstance(c, (int, float)) and not isinstance(c, bool) and c == c), reverse=True)
+    if len(cores) > 32:                                         # a door has room for eight flames: past that, the busiest of each group
+        cores = [cores[i * len(cores) // 32] for i in range(32)]
+    n, doors = len(cores), []
+    for i in range(4):                                          # a door for each quarter of the cores, busiest first
+        part = [vals["cpu"]] * 4 if not n else cores[i:i + 1] if n < 4 else cores[i * n // 4:(i + 1) * n // 4]     # under four cores, doors stay shut
+        doors.append([eased(f"core{i}.{j}", c, 0.3) for j, c in enumerate(part)])
+    timetable = 0.5 if t % 34 < 2 else 0.0                      # no word from the disk: a train now and then all the same
+    gpu = bool(s.gpu.live and s.gpu.value is not None)
+    return {"doors": doors,
+            "kernel": eased("kernel", num("cpu", "kernel", 0.25), 0.1),
+            "top": str(s.cpu.data.get("top") or ""), "top_share": min(1.0, max(0.0, num("cpu", "top_share", 0.0))),
+            "cache": eased("cache", num("ram", "cache", 0.0)), "swap": eased("swap", num("ram", "swap", 0.0)),
+            "down": eased("down", num("net", "down", vals["net"]), 0.3), "up": eased("up", num("net", "up", vals["net"]), 0.3),
+            "read": eased("read", num("disk", "read", timetable), 0.15), "write": eased("write", num("disk", "write", 0.0), 0.15),
+            "gpu": gpu, "vram": eased("vram", num("gpu", "vram", 0.0)), "temp": num("gpu", "temp", 50.0)}
+
+
+def more(shot, s, ins):
+    """The second plate of a close-up: what is inside the number, as rows of (text, size, colour)."""
+    grey, white, amber = "#aab3d6", "#ffffff", "#ffc46b"
+
+    def fit(txt, size, col):                                    # as large as the pane's width lets it be
+        return (txt, max(10, min(size, int(96 / max(1, len(txt))))), col)
+
+    def short(rate):                                            # "682.4K/s" -> "682K"
+        r = str(rate)[:-2] if str(rate).endswith("/s") else str(rate)
+        return (r[:-1].split(".")[0] if len(r) > 4 else r[:-1]) + r[-1:]
+    if shot == "cpu":                                           # who does the work, and how much of it is the system's own
+        sys_ = fit(f"sys {ins['kernel'] * 100:.0f}%", 13, amber)
+        name, share = ins["top"], f"{ins['top_share'] * 100:.0f}%"
+        if len(name) > 8:                                       # a long name takes two rows
+            return [fit(name[:7], 13, grey), fit(name[7:14], 13, grey), (share, 17, white), (sys_[0], 12, amber)]
+        return [fit(name, 14, grey), (share, 20, white), sys_] if name else [sys_]
+    if shot == "ram" and "cache" in s.ram.data:
+        return [("cache", 13, grey), (f"{ins['cache'] * 100:.0f}%", 22, white), fit(f"swap {ins['swap'] * 100:.0f}%", 13, amber)]
+    if shot == "net" and "down_text" in s.net.data:
+        return [fit("dn " + short(s.net.data["down_text"]), 15, "#fff7c2"), fit("up " + short(s.net.data.get("up_text", "")), 15, "#ff6b6b")]
+    if shot == "disk" and "read_text" in s.disk.data:
+        return [fit("rd " + short(s.disk.data["read_text"]), 15, READ), fit("wr " + short(s.disk.data.get("write_text", "")), 15, WRITE)]
+    if shot == "gpu" and ins["gpu"] and "vram" in s.gpu.data:
+        hot = ramp(["#58b8ff", "#ffd166", "#ff4d2e"], min(1.0, max(0.0, (ins["temp"] - 40) / 45)))
+        return [("VRAM", 13, grey), fit(str(s.gpu.data.get("vram_text") or f"{ins['vram'] * 100:.0f}%"), 22, white), (f"{ins['temp']:.0f}\u00b0C", 15, hot)]
+    return None
 
 
 # ---------------------------------------------------------------- what stands still
@@ -354,10 +442,11 @@ def remember(t, state, vals):
     plant's smoke for every three seconds of the last four and a half minutes."""
     m = state["past"]
     if m is None or not 0 <= t - m["t"] < 5:                    # first frame, or another page was showing
-        keep = m or {"held": dict.fromkeys(ALARM, 0.0), "dip": dict.fromkeys(ALARM, 0.0), "flow": vals["net"], "burn": vals["cpu"],
+        keep = m or {"held": dict.fromkeys(ALARM, 0.0), "dip": dict.fromkeys(ALARM, 0.0), "down": vals["down"], "up": vals["up"], "burn": vals["cpu"],
                      "wet": 0.0, "smoke": [], "puff": -9.0}
         m = state["past"] = {**keep, "t": t}
     dt, m["t"] = t - m["t"], t
+    m["dt"] = dt
     for n, th in ALARM.items():
         if vals[n] > th:
             m["held"][n], m["dip"][n] = m["held"][n] + dt, 0.0
@@ -365,7 +454,8 @@ def remember(t, state, vals):
             m["dip"][n] += dt
             if m["dip"][n] > 8:
                 m["held"][n] = 0.0
-    m["flow"] += (vals["net"] - m["flow"]) * min(1.0, dt / 20)
+    for way in ("down", "up"):
+        m[way] += (vals[way] - m[way]) * min(1.0, dt / 20)
     m["burn"] += (vals["cpu"] - m["burn"]) * min(1.0, dt / 15)       # what goes up the chimney: a spike is a pale wisp
     m["wet"] = min(1.0, m["wet"] + dt / 40) if vals["ram"] > 0.6 else max(0.0, m["wet"] - dt / 90)
     if not 0 <= t - m["puff"] < 3:
@@ -427,8 +517,10 @@ def camera(t, state, vals, since):
         if want:
             go(want, 8)
         elif tour and t - c["home"] > tour:
-            go(TOUR[c["n"] % len(TOUR)], 6)
+            name = TOUR[c["n"] % len(TOUR)]
             c["n"] += 1
+            if name != "gpu" or vals["has_gpu"]:                # nothing to visit at the wheel without a graphics card to read
+                go(name, 6)
     m, x, y, u = now()
     return m, x, y, 0 < u < 1, c["shot"] != "wide" and u < 1, c["shot"] != "wide" and u >= 1
 
@@ -479,6 +571,8 @@ def draw(im, d, s, t, state):
     day = level(s, "time_of_day")
     vals = {n: level(s, n, state) for n in ("cpu", "ram", "net", "disk")}
     cpu, ram, net, disk = vals["cpu"], vals["ram"], vals["net"], vals["disk"]
+    ins = inside(s, vals, state, t)
+    vals.update(gpu=level(s, "gpu", state) if ins["gpu"] else 0.0, has_gpu=ins["gpu"], down=ins["down"], up=ins["up"])
     since = ((day * 24) % 1.0) * 3600                           # seconds past the hour
     load = crane(t, state, disk)
     past = remember(t, state, vals)
@@ -596,16 +690,29 @@ def draw(im, d, s, t, state):
         d.rectangle((a[0] + 2 * kr, a[1] - 2.5 * kr, a[0] + 16 * kr, a[1]), fill=sh(col, zb))
         if L.dusk > 0.3:
             d.rectangle((a[0] + 18 * kr, a[1] - 3 * kr, a[0] + 18 * kr + px(1), a[1] - 3 * kr + px(1)), fill="#fff7c2")
-    tp, way = (t / 34.0) % 1.0, 1 if int(t / 34.0) % 2 else -1          # the train on the viaduct
-    if tp < 0.42:
-        head, kt = way * (-640 + tp / 0.42 * 1280), v.k(RAIL)
-        for car in range(6):
+    tr = state["train"]                                         # the viaduct carries what the disk moves
+    if tr and not 0 <= t - tr["t0"] < 12.5:
+        tr = state["train"] = None
+    busy = max(ins["read"], ins["write"])
+    if tr is None and busy > 0.08:                              # a wagon or six, by how much: blue for reads, orange for writes
+        n = 1 + round(5 * busy)
+        wr = round(n * ins["write"] / (ins["read"] + ins["write"]))
+        tr = state["train"] = {"t0": t, "way": -1 if wr * 2 > n else 1, "cars": [READ] * (n - wr) + [WRITE] * wr}
+    if tr:
+        way, kt = tr["way"], v.k(RAIL)
+        head = lerp(*((-410, 290) if way > 0 else (165, -535)), (t - tr["t0"]) / 11.5)
+        for car, col in enumerate(["#f2e8d0"] + tr["cars"]):
             x = head - way * car * 17
-            a, b = P(min(x, x - way * 16), 30, RAIL), P(max(x, x - way * 16), 26, RAIL)
-            d.rectangle((a[0], a[1], b[0], b[1]), fill=sh("#d6453d" if car else "#f2e8d0", RAIL, 0.4))
-            d.rectangle((a[0] + kt, a[1] + kt, max(b[0] - kt, a[0] + kt), a[1] + 2.2 * kt), fill=mix("#22304a", "#ffe9a8", L.dusk))
-        tail = P(head - way * 6 * 17, 28, RAIL)                 # and the blur it leaves
-        d.line((*tail, tail[0] - way * 26 * kt, tail[1]), fill=mix(sh("#d6453d", RAIL, 0.4), L.haze, 0.6), width=max(1, round(kt * 2)))
+            a, b = P(min(x, x - way * 16), 33.5, RAIL), P(max(x, x - way * 16), 26, RAIL)
+            col = mix(col, sh(col, RAIL, 0.3), 0.35)            # freight is painted to be seen: less of the distance on it
+            d.rectangle((a[0], a[1], b[0], b[1]), fill=col)
+            d.line((a[0], b[1], b[0], b[1]), fill=mix("#1a1c26", L.haze, 0.2), width=px(1))     # and it rides on something dark
+            if car and b[1] - a[1] >= 5:                        # the wagons carry containers two high
+                d.line((a[0], (a[1] + b[1]) / 2, b[0], (a[1] + b[1]) / 2), fill=mix(col, DARK, 0.35), width=px(0.5))
+            if car == 0:
+                d.rectangle((a[0] + kt, a[1] + kt, max(b[0] - kt, a[0] + kt), a[1] + 2.2 * kt), fill=mix("#22304a", "#ffe9a8", L.dusk))
+        tail = P(head - way * (len(tr["cars"]) + 1) * 17, 29.7, RAIL)   # and the blur it leaves
+        d.line((*tail, tail[0] - way * 26 * kt, tail[1]), fill=mix(sh(tr["cars"][-1], RAIL, 0.3), L.haze, 0.6), width=max(1, round(kt * 4)))
 
     # ---- the near city
     im.paste(near, (0, 0), near)
@@ -617,13 +724,22 @@ def draw(im, d, s, t, state):
             c, R = at(((ph + t / 90) % 1.0) * (W + 300) - 150, yw), r * M * (yw / 50)
             g.ellipse(((c[0] - R) / 8, (c[1] - R * 0.3) / 8, (c[0] + R) / 8, (c[1] + R * 0.3) / 8), fill=int(44 * (1 - L.night / 0.6)))
         im.paste((10, 14, 34), (0, 0), mask.resize((W, H), Image.BILINEAR))
-    hub, R = P(-296, 22, 250), 18.2 * M                         # the big wheel, turning
+    hub, R = P(-296, 22, 250), 18.2 * M                         # the big wheel: the graphics card turns it
+    state["wheel"] += min(0.5, max(0.0, past["dt"])) * ((0.05 + 1.3 * vals["gpu"]) if ins["gpu"] else 0.12)
     spoke = mix(sh("#e8e8f0", 200), "#ffd98a", L.dusk * 0.7)
     d.ellipse((hub[0] - R, hub[1] - R, hub[0] + R, hub[1] + R), outline=spoke, width=px(2))
     for i in range(8):
-        an = t * 0.12 + i * math.pi / 4
+        an = state["wheel"] + i * math.pi / 4
         e = (hub[0] + R * math.cos(an), hub[1] + R * math.sin(an))
         d.line((*hub, *e), fill=spoke, width=px(0.7))
+    if ins["gpu"]:                                              # a green ring inside the rim fills with its memory,
+        r = R - 4.2 * M                                         # and the hub is as hot as the card
+        d.arc((hub[0] - r, hub[1] - r, hub[0] + r, hub[1] + r), -90, -90 + 360 * ins["vram"], fill=mix("#63f07a", DARK, L.night * 0.2), width=px(2.8))
+        r = 4 * M
+        d.ellipse((hub[0] - r, hub[1] - r, hub[0] + r, hub[1] + r), fill=ramp(["#58b8ff", "#ffd166", "#ff4d2e"], min(1.0, max(0.0, (ins["temp"] - 40) / 45))))
+    for i in range(8):
+        an = state["wheel"] + i * math.pi / 4
+        e = (hub[0] + R * math.cos(an), hub[1] + R * math.sin(an))
         col = CARS[1 + i % 4] if L.dusk < 0.3 or int(t * 3 + i) % 8 else "#ffffff"      # a light runs round it at night
         d.rectangle((e[0] - 2 * M, e[1] - M, e[0] + 2 * M, e[1] + 3 * M), fill=mix(sh(col, 200, 0.3), col, L.dusk))
     if L.dusk > 0.3:                                            # a few televisions, far off
@@ -646,16 +762,20 @@ def draw(im, d, s, t, state):
         a, b = P(13, 102 + i * 4, 430), P(27, 99 + i * 4, 430)
         on = min(1.0, max(0.0, net * 8 - i))
         d.rectangle((a[0], a[1], b[0], max(b[1], a[1] + 1)), fill=mix(mix(sh("#7d8597", 300), DARK, 0.55), "#7df9ff", on))
-    rings = 1 + int(net * 3.99)
-    for i in range(rings):                                      # more and faster with traffic
-        p = (t * (0.25 + 1.2 * net) + i / rings) % 1.0
-        r, col = (6 + 22 * p) * M, mix(mix("#0b4fd0", "#7df9ff", L.night), L.top, p * 0.8)
-        d.arc((tip[0] - r, tip[1] - r, tip[0] + r, tip[1] + r), 315, 45, fill=col, width=px(3))
-        d.arc((tip[0] - r, tip[1] - r, tip[0] + r, tip[1] + r), 135, 225, fill=col, width=px(3))
-    n = 6 + int(past["flow"] * (len(state["cars"]) - 6))        # a road fills slowly: the last twenty seconds or so
+    for flow, arc in ((ins["down"], (315, 45)), (ins["up"], (135, 225))):
+        rings = 1 + int(flow * 3.99)                            # more and faster with traffic. On the right, what comes
+        for i in range(rings):                                  # down closes on the mast; on the left, what goes up leaves it
+            p = (t * (0.25 + 1.2 * flow) + i / rings) % 1.0
+            p = 1 - p if arc[0] == 315 else p
+            r, col = (6 + 22 * p) * M, mix(mix("#0b4fd0", "#7df9ff", L.night), L.top, p * 0.8)
+            d.arc((tip[0] - r, tip[1] - r, tip[0] + r, tip[1] + r), *arc, fill=col, width=px(3))
+    half = len(state["cars"]) // 2                              # a road fills slowly: the last twenty seconds or so.
+    lanes = (3 + int(past["down"] * (half - 3)), 3 + int(past["up"] * (half - 3)))     # towards us comes down, away goes up
     cars = []
-    for q, (ph, col) in enumerate(state["cars"][:n]):
+    for q, (ph, col) in enumerate(state["cars"]):
         away = q % 2
+        if q // 2 >= lanes[away]:
+            continue
         u = (ph + t / 40.0 * (1 + q % 3 * 0.15)) % 1.0
         cars.append((70 * (880 / 70) ** (u if away else 1 - u), away, col, 5 + (q // 2 % 2) * 4))     # even to the eye
     road = sh("#3b3e4b", 0, 0.7)
@@ -702,12 +822,21 @@ def draw(im, d, s, t, state):
     full = (b[1] - a[1]) * ram
     wet = "#ff6b5e" if ram > 0.9 else "#58b8ff"
     slosh = math.sin(t * 2.2) * 0.25 * kt * min(1.0, ram * 8, (1 - ram) * 8)
+    kept = (b[1] - a[1]) * min(ins["cache"], 1 - ram)           # above the water, memory that only holds files:
+    if kept >= 1:                                               # dimmer, and given back the moment it is wanted
+        d.rectangle((a[0], b[1] - full - kept, b[0], b[1] - full), fill=mix(wet, "#0e1322", 0.58))
+        for i in range(1, int(kept / (1.3 * kt)) + 1) if kt >= 4 else ():
+            d.line((a[0], b[1] - full - i * 1.3 * kt, b[0], b[1] - full - i * 1.3 * kt), fill=mix(wet, "#0e1322", 0.35), width=1)
     d.polygon(((a[0], b[1]), (b[0], b[1]), (b[0], b[1] - full - slosh), (a[0], b[1] - full + slosh)), fill=wet)
     d.line((a[0], b[1] - full + slosh, b[0], b[1] - full - slosh), fill=mix(wet, "#ffffff", 0.6), width=px(1))
     if kt >= 4:                                                 # marks at the quarters
         for q in (0.25, 0.5, 0.75):
             y = b[1] - (b[1] - a[1]) * q
             d.line((a[0], y, a[0] + 1.6 * kt, y), fill="#c4c9d6", width=px(0.5))
+    a2, b2 = P(-98.3, 51.5, 132), P(-95.5, 39.5, 132)           # an amber tube beside it: how full the pagefile is
+    d.rectangle((a2[0], a2[1] - px(1), b2[0] + px(1), b2[1] + px(1)), fill="#0e1322")
+    if ins["swap"] > 0.004:
+        d.rectangle((a2[0], min(b2[1] - 1, b2[1] - (b2[1] - a2[1]) * ins["swap"]), b2[0], b2[1]), fill="#ffb648")
     if ram > 0.9:                                               # and it overflows
         for i in range(3):
             c = P(-92.4, 52 - ((t * 1.4 + i / 3) % 1.0) * 18, 132)
@@ -746,22 +875,28 @@ def draw(im, d, s, t, state):
 
     # ---- cpu: furnace doors, the stoker, smoke
     kp = v.k(95)
-    fire = ramp(["#2a1614", "#a3300a", "#ff8a1f", "#fff2b0"], min(1.0, cpu * 1.05))
+    fire = ramp(FIRE, min(1.0, cpu * 1.05))
     frame = mix(sh("#8a4b3a"), DARK, 0.5)
-    for i in range(4):
-        a, b = P(14 + i * 12, 12, 95), P(24 + i * 12, 3, 95)
-        glow = mix(fire, "#fff7d0", 0.25 * cpu * (0.5 + 0.5 * math.sin(t * 9 + i * 2)))
+    for i in range(4):                                          # a door for each quarter of the cores. The fire starts in the two
+        a, b = P(14 + i * 12, 12, 95), P(24 + i * 12, 3, 95)    # middle doors (the two the wide view shows) and spreads outward
+        hot = ins["doors"][(2, 0, 1, 3)[i]]
+        lead = hot[0] if hot else 0.0
+        glow = mix(ramp(FIRE, min(1.0, lead * 1.05)), "#fff7d0", 0.25 * lead * (0.5 + 0.5 * math.sin(t * 9 + i * 2)))
         r, g = (b[0] - a[0]) / 2, max(2, kp * 0.8)
         d.rectangle((a[0] - g, a[1], b[0] + g, b[1]), fill=frame)
         d.pieslice((a[0] - g, a[1] - r - g, b[0] + g, a[1] + r + g), 180, 360, fill=frame)
         d.rectangle((a[0], a[1], b[0], b[1]), fill=glow)
         d.pieslice((a[0], a[1] - r, b[0], a[1] + r), 180, 360, fill=glow)
-        if kp >= 4:                                             # close up there is a fire in there
-            for j in range(4):
-                fx = a[0] + (0.14 + j * 0.24) * 2 * r
-                fh = (2.5 + 9 * cpu) * kp * (0.55 + 0.45 * math.sin(t * (7 + j) + i * 1.7 + j))
-                d.polygon(((fx - 1.1 * kp, b[1]), (fx + 0.5 * kp * math.sin(t * 5 + j), b[1] - fh), (fx + 1.1 * kp, b[1])),
-                          fill=mix("#ffb02e", "#fff7d0", 0.5 + 0.5 * math.sin(t * 11 + j * 2)))
+        if kp >= 4:                                             # close up there is a fire in there: a flame for each core,
+            m = len(hot)                                        # as tall as the core is busy, orange against the glow
+            fw = min(1.2 * kp, 0.42 * 2 * r / max(1, m))
+            for j in range(m):
+                fx = a[0] + (j + 0.5) / m * 2 * r
+                room = (b[1] - a[1]) + math.sqrt(max(0.0, r * r - (fx - a[0] - r) ** 2))        # up to the arch
+                fh = min(room * 0.94, (1.2 + 11 * hot[j]) * kp * (0.8 + 0.2 * math.sin(t * (7 + j % 5) + i * 1.7 + j)))
+                lean = 0.4 * fw * math.sin(t * 5 + j)
+                d.polygon(((fx - fw, b[1]), (fx + lean, b[1] - fh), (fx + fw, b[1])), fill=mix("#e8501a", "#c2330c", 0.5 + 0.5 * math.sin(t * 11 + j * 2)))
+                d.polygon(((fx - fw * 0.45, b[1]), (fx + lean * 0.5, b[1] - fh * 0.55), (fx + fw * 0.45, b[1])), fill="#ffb02e")
             d.rectangle((a[0], b[1] - 0.8 * kp, b[0], b[1]), fill="#1a0f0c")
         d.rectangle((a[0] + r - g / 4, a[1] - r, a[0] + r + g / 4, b[1]), fill=mix(glow, DARK, 0.5))
     for fx in (16, 56):                                         # roof fans, as fast as the load
@@ -780,14 +915,15 @@ def draw(im, d, s, t, state):
     d.rectangle((a[0] - kp * 0.4, a[1], a[0] + kp * 0.4, a[1] + 1.9 * kp), fill="#1c1a22")
     d.ellipse((a[0] - hd, a[1] - 2 * hd, a[0] + hd, a[1]), fill=mix("#e0b089", DARK, L.night * 0.4))
     d.rectangle((a[0] + way * kp * 1.3 - kp * 0.8, a[1] + 0.9 * kp, a[0] + way * kp * 1.3 + kp * 0.8, a[1] + 1.7 * kp), fill="#3a3f4c")
-    for cx in CHIMNEYS:
+    for ci, cx in enumerate(CHIMNEYS):                          # brown smoke for the programs' work, white steam for the kernel's
         top = P(cx + 3.5, 80, 110)
-        n = 2 + int(cpu * 5)
+        amt = min(1.0, cpu * ((1 - ins["kernel"]) * 1.4, ins["kernel"] * 2.5)[ci])
+        n = 2 + int(amt * 5)
         for i in range(n):
-            p = (t * (0.06 + 0.4 * cpu) + i / n + cx) % 1.0
-            c = (top[0] + (-(8 + 12 * wind) * p + 3 * math.sin(t + i)) * M, top[1] - (4 + (20 + 30 * cpu) * p) * M)
-            r = (3 + 5 * cpu + (3 + 8 * cpu) * p) * M
-            d.ellipse((c[0] - r, c[1] - r, c[0] + r, c[1] + r), fill=mix(mix("#e2e2ea", SOOT, cpu), mix(L.top, L.low, 0.2), p * 0.8))
+            p = (t * (0.06 + 0.4 * amt) + i / n + cx) % 1.0
+            c = (top[0] + (-(8 + 12 * wind) * p + 3 * math.sin(t + i)) * M, top[1] - (4 + (20 + 30 * amt) * p) * M)
+            r = (3 + 5 * amt + (3 + 8 * amt) * p) * M
+            d.ellipse((c[0] - r, c[1] - r, c[0] + r, c[1] + r), fill=mix(mix("#e2e2ea", "#fbfcff" if ci else SOOT, amt), mix(L.top, L.low, 0.2), p * 0.8))
         if held["cpu"] > patience:                                  # run hot this long and they flare
             fh = (9 + 5 * math.sin(t * 13 + cx)) * M
             d.polygon(((top[0] - 3.5 * M, top[1]), (top[0] + 2 * M * math.sin(t * 9), top[1] - fh), (top[0] + 3.5 * M, top[1])), fill="#ff8a1f")
@@ -835,6 +971,14 @@ def draw(im, d, s, t, state):
                     crate(*BAYS[i], lv * 5, live[(lv, i)])
     if yd["gz"] <= 100:
         gantry()
+    foot, top, kl = P(-63, 0, 89), P(-63, 17.6, 89), v.k(89)    # the yard's lamp post is the drive's activity light:
+    d.line((*foot, *top), fill=sh("#3a3f4c", 0, 0.5), width=max(1, round(kl * 0.35)))
+    d.rectangle((top[0] - 2.9 * kl, top[1] - 2.6 * kl, top[0] + 2.9 * kl, top[1]), fill="#12141e")
+    for side, col, amt in ((-1, READ, ins["read"]), (1, WRITE, ins["write"])):       # blue blinks for reads, orange for writes
+        dice = math.sin(int(t * 10) * 12.9898 + side * 7.1) * 43758.5453 % 1.0
+        c = (top[0] + side * 1.45 * kl, top[1] - 1.3 * kl)
+        d.rectangle((c[0] - kl, c[1] - kl, c[0] + kl, c[1] + kl),
+                    fill=mix(col, "#12141e", 0.82) if amt <= 0.03 else col if dice < 0.2 + 0.8 * amt else mix(col, "#12141e", 0.45))
 
     # ---- a zoom smears: the picture again, a little larger each time, about the point that holds still
     if moving and abs(SHOTS[cam["shot"]][0] - cam["frm"][0]) > 1e-3:
@@ -867,23 +1011,31 @@ def draw(im, d, s, t, state):
     if storm and t % 1.3 < 0.12:                                # the flash
         im.paste(Image.blend(im, Image.new("RGB", (W, H), "#dfe6ff"), 0.3))
     im.paste((255, 255, 255), (0, 0), state["glare"].point(lambda g: int(g * (1 - 0.7 * L.night))))
-    if arrived:                                                 # the number of what the lens is on
-        grow = min(1.0, max(0.0, (t - cam["t0"] - MOVE) / 0.25))
-        x0, y0, x1, y1 = key_box(PLATE[cam["shot"]])
-        sig = getattr(s, cam["shot"])
-        value = sig.text if cam["shot"] != "time_of_day" else f"{int(day * 24):02d}:{int(day * 1440) % 60:02d}"
-        if grow < 0.5:                                          # it opens from a line
-            d.line((x0 + 4, y0 + 32, x0 + 59, y0 + 32), fill="#ffc46b", width=3)
-        else:                                                   # the whole pane, so it reads from the chair
-            d.rounded_rectangle((x0 + 1, y0 + 1, x0 + 62, y0 + 62), 7, fill="#0a0c18", outline="#ffc46b", width=2)
-            over = held.get(cam["shot"], 0.0)                   # and for how long, once it is no spike
-            if over < 10:
-                text(d, (x0 + 32, y0 + 15), sig.label, 13, "#aab3d6")
-                text(d, (x0 + 32, y0 + 41), value, 26 if len(value) <= 3 else 22 if len(value) == 4 else 21)
-            else:
-                text(d, (x0 + 32, y0 + 11), sig.label, 12, "#aab3d6")
-                text(d, (x0 + 32, y0 + 31), value, 23 if len(value) <= 3 else 20 if len(value) == 4 else 19)
-                text(d, (x0 + 32, y0 + 51), f"{int(over)}s" if over < 60 else f"{int(over // 60)}m{int(over % 60):02d}s", 15, "#ffc46b")
+    if arrived:                                                 # the number of what the lens is on, and what is inside it
+        grow, shot = min(1.0, max(0.0, (t - cam["t0"] - MOVE) / 0.25)), cam["shot"]
+        sig = getattr(s, shot)
+        value = sig.text if shot != "time_of_day" else f"{int(day * 24):02d}:{int(day * 1440) % 60:02d}"
+        value = "--" if shot == "gpu" and not ins["gpu"] else value
+        value = value[:-2] if len(value) > 6 and value.endswith("/s") else value
+        fit = int(100 / max(1, len(value)))
+        over = held.get(shot, 0.0)                              # and for how long, once it is no spike
+        rows = [(sig.label, 13, "#aab3d6"), (value, min(fit, 26 if len(value) <= 3 else 22 if len(value) == 4 else 21), "#ffffff")]
+        if over >= 10:
+            rows = [(sig.label, 12, "#aab3d6"), (value, min(fit, 23 if len(value) <= 3 else 20 if len(value) == 4 else 19), "#ffffff"),
+                    (f"{int(over)}s" if over < 60 else f"{int(over // 60)}m{int(over % 60):02d}s", 15, "#ffc46b")]
+        for key, rows, edge in ((PLATE[shot], rows, "#ffc46b"), (MORE.get(shot), more(shot, s, ins), "#7d8fc4")):
+            if not (key and rows):
+                continue
+            x0, y0, _, _ = key_box(key)
+            if grow < 0.5:                                      # it opens from a line
+                d.line((x0 + 4, y0 + 32, x0 + 59, y0 + 32), fill=edge, width=3)
+                continue
+            d.rounded_rectangle((x0 + 1, y0 + 1, x0 + 62, y0 + 62), 7, fill="#0a0c18", outline=edge, width=2)   # the whole pane: it reads from the chair
+            gap = (60 - sum(size for _, size, _ in rows)) / (len(rows) + 1)
+            y = y0 + 2 + gap
+            for txt, size, col in rows:
+                text(d, (x0 + 32, y + size / 2), txt, size, col)
+                y += size + gap
     d.rectangle((0, H - 9, W, H), fill=mix("#4a342a", DARK, 0.3 + 0.4 * L.night))
     d.line((0, H - 9, W, H - 9), fill=mix("#7a5a48", DARK, 0.3 + 0.4 * L.night))
     asleep = 1 <= day * 24 < 5.5 and cam["shot"] == "wide" and rain < 0.75

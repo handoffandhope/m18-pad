@@ -57,6 +57,21 @@ picture needs a number that is not listed (unread mail, a build status), say so 
 adding a signal is a separate, small job. Some signals carry a list too (`s.agents.items`, one dict
 per running agent session); `m18ctl signals` marks those.
 
+The PC readings also say what is inside them, in `s.NAME.data`, a dict. Use it for a second layer
+that someone who knows computers can read, on top of a picture that works without it. Any key may be
+missing, so read with `.get` and fall back to the plain value. Levels are 0..1 unless noted.
+
+| Signal | `data` keys |
+|---|---|
+| `cpu` | `cores` (list, one level per core), `kernel` (share of the busy time spent in the system), `top` (busiest program's name), `top_share` (its share of all cores) |
+| `ram` | `cache` (share of memory held as reclaimable file cache), `swap` (pagefile in use), `used_text`, `total_text` |
+| `net` | `down`, `up` (each 10 KB/s → 10 MB/s), `down_text`, `up_text` |
+| `disk` | `read`, `write` (each 100 KB/s → 100 MB/s), `read_text`, `write_text` |
+| `gpu` | `vram` (card memory in use), `vram_text`, `temp` (°C) |
+
+`shot --set cpu=0.9` fills `data` with made-up values that fit the number, so the second layer shows
+in a still.
+
 ## Rules of the glass
 
 - Key column c (0-4) shows x = c·94 … c·94+63; row r (0-2) shows y = r·94 … r·94+63. The 30 px
@@ -130,6 +145,9 @@ Read one before you write. Your scene should hold up next to it in `--far`.
   top of shapes that read without them. It also zooms: every place is drawn through a `View`, so a
   close-up is the same picture through a longer lens, with the exact number on a plate. Detail too
   small for the chair (flames, marks on the glass, a second hand) is only drawn when the lens is close.
+  It also has a second layer from `data`: one furnace door per group of cores, a cache band above the
+  water, cars one way for download and the other for upload. Each is a split of a carrier that was
+  already there, so the picture reads the same from the chair and says more to whoever looks longer.
 - [scenes/marbles.py](../scripts/m18/scenes/marbles.py): *one thing per key.* Fifteen marbles, one
   session each, state shown by motion, lift and glow.
 

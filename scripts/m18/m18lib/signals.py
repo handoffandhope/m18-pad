@@ -12,7 +12,12 @@ signal is one file, `$M18/signals/<name>.py`:
         return {"value": 0.3, "text": "3 unread"}
 
 `items` is a list (one entry per mail, per agent, per build) and `data` a dict of extras; scenes read
-them as `s.inbox.items` and `s.inbox.data`. `read` and `sim` may take one argument, the Hub, for
+them as `s.inbox.items` and `s.inbox.data`. The built-ins carry what is inside their number there:
+`cpu` has `cores` (a load per core), `kernel` (the share of the work done in the kernel), `top` and
+`top_share` (the busiest program and its share of all cores); `ram` has `cache` (memory holding
+files that can be given back at once) and `swap`; `net` has `down` and `up`; `disk` has `read` and
+`write`; `gpu` has `vram` and `temp` (deg C). All are 0..1 unless said, and the rates come with a
+`*_text` ("2.1M/s"). Any of them may be missing, so read them with `.get`. `read` and `sim` may take one argument, the Hub, for
 `hub.base` (the install folder) and `hub.fn("plugin.function")`. Signals shipped with the skill
 live next to this package in `signals/`; a file of the same name in `$M18/signals/` replaces one.
 
@@ -24,6 +29,8 @@ from __future__ import annotations
 import importlib.util
 import inspect
 import math
+import struct
+import sys
 import threading
 import time
 import zlib
@@ -38,7 +45,7 @@ class Sig:
 
     def __init__(self, name, value=None, text="", label=None, items=None, live=True, data=None):
         self.name, self.value, self.text = name, value, text
-        self.label, self.items, self.live, self.data = label or name.upper(), list(items or []), live, dict(data or {})
+        self.label, self.items, self.live, self.data = label or name.upper(), list(items or []), live, dict(data) if isinstance(data, dict) else {}
 
     def __float__(self):
         return float(self.value or 0.0)
@@ -72,35 +79,136 @@ def _rate(n):
 
 
 # ------------------------------------------------------------------ built-in readers: fn(memo) -> dict
+def _log(bps, low):
+    """A rate on a log scale: `low` bytes a second reads 0 and a thousand times that reads 1."""
+    return _clamp((math.log10(max(bps, 1.0)) - math.log10(low)) / 3)
+
+
+def _proc_times():
+    """{(pid, when it started): (program, CPU seconds it has used so far)} for every process. Windows gives
+    the whole table in one call; asking psutil for each process takes about a millisecond apiece there."""
+    out = {}
+    if sys.platform != "win32" or struct.calcsize("P") != 8:
+        import psutil
+        for p in psutil.process_iter(["pid", "name", "cpu_times", "create_time"]):
+            ct = p.info.get("cpu_times")
+            if ct:
+                out[(p.info.get("pid"), p.info.get("create_time"))] = (p.info.get("name") or "?", ct.user + ct.system)
+        return out
+    import ctypes
+    size = ctypes.c_ulong(1 << 20)
+    while True:
+        buf = ctypes.create_string_buffer(size.value)
+        status = ctypes.windll.ntdll.NtQuerySystemInformation(5, buf, size, ctypes.byref(size)) & 0xFFFFFFFF
+        if status == 0:
+            break
+        if status != 0xC0000004:                                 # anything but "buffer too small"
+            raise OSError(f"NtQuerySystemInformation {status:#x}")
+        size.value += 1 << 16
+    off = 0
+    while True:                                                  # SYSTEM_PROCESS_INFORMATION, 64-bit layout
+        step, = struct.unpack_from("<L", buf, off)
+        born, user, kernel = struct.unpack_from("<qqq", buf, off + 32)
+        length, = struct.unpack_from("<H", buf, off + 56)
+        ptr, pid = struct.unpack_from("<Q", buf, off + 64)[0], struct.unpack_from("<Q", buf, off + 80)[0]
+        if pid:                                                  # pid 0 is the idle time
+            name = ctypes.wstring_at(ptr, length // 2) if ptr and length else "System"
+            out[(pid, born)] = (name, (user + kernel) / 1e7)
+        if not step:
+            return out
+        off += step
+
+
+def _top(memo, cores):
+    """The program that used the most CPU since the last look, and its share of all cores."""
+    now, times = time.time(), _proc_times()
+    last = memo.get("procs")
+    memo["procs"] = (now, times)
+    if not last or now - last[0] < 0.5:
+        return memo.get("top") or ("", 0.0)
+    used = {}
+    for key, (name, secs) in times.items():                      # one that started since the last look counts from nothing
+        gain = secs - last[1].get(key, ("", 0.0))[1]
+        if gain > 0:
+            used[name] = used.get(name, 0.0) + gain              # every process of one program added up
+    if not used:
+        return "", 0.0
+    name = max(used, key=used.get)
+    share = _clamp(used[name] / ((now - last[0]) * max(1, cores)))
+    return (name[:-4] if name.lower().endswith(".exe") else name), share
+
+
 def _cpu(memo):
     import psutil
-    v = psutil.cpu_percent(interval=None)
-    return {"value": v / 100, "text": f"{v:.0f}%"}
+    cores = [c / 100 for c in psutil.cpu_percent(interval=None, percpu=True)]
+    v = 100 * sum(cores) / max(1, len(cores))
+    ct = psutil.cpu_times_percent(interval=None)
+    busy = 100 - ct.idle - getattr(ct, "iowait", 0.0)
+    kernel = _clamp((busy - ct.user - getattr(ct, "nice", 0.0)) / busy) if busy > 1 else 0.0
+    if time.time() - memo.get("top_at", 0) >= 3:                 # who is doing the work: every three seconds
+        memo["top_at"] = time.time()
+        try:
+            memo["top"] = _top(memo, len(cores))
+        except Exception:                                        # noqa: BLE001  the number matters more than the name
+            memo["top"] = ("", 0.0)
+    name, share = memo.get("top") or ("", 0.0)
+    return {"value": v / 100, "text": f"{v:.0f}%", "data": {"cores": cores, "kernel": kernel, "top": name, "top_share": share}}
+
+
+def _cache(vm):
+    """The part of memory that holds files and can be handed back at once, as a share of all of it."""
+    if hasattr(vm, "cached"):                                    # Linux
+        return _clamp((vm.cached + getattr(vm, "buffers", 0)) / vm.total)
+    if sys.platform == "win32":                                  # the standby list, with the system's own working set
+        import ctypes
+        info = (ctypes.c_size_t * 13)()                          # PERFORMANCE_INFORMATION: cb, 10 sizes, 3 counts
+        ctypes.cast(info, ctypes.POINTER(ctypes.c_ulong))[0] = ctypes.sizeof(info)
+        if ctypes.windll.psapi.GetPerformanceInfo(info, ctypes.sizeof(info)):
+            return _clamp(min(info[6] * info[10], vm.available) / vm.total)
+        return None
+    return _clamp(vm.inactive / vm.total) if hasattr(vm, "inactive") else None
 
 
 def _ram(memo):
     import psutil
-    v = psutil.virtual_memory().percent
-    return {"value": v / 100, "text": f"{v:.0f}%"}
+    vm = psutil.virtual_memory()
+    data = {"used_text": _rate(vm.total - vm.available)[:-2], "total_text": _rate(vm.total)[:-2]}
+    try:
+        data.update(cache=_cache(vm), swap=psutil.swap_memory().percent / 100)
+    except Exception:                                            # noqa: BLE001  extras never cost the reading
+        pass
+    return {"value": vm.percent / 100, "text": f"{vm.percent:.0f}%", "data": {k: v for k, v in data.items() if v is not None}}
 
 
 def _net(memo):
     import psutil
     c, now = psutil.net_io_counters(), time.time()
-    total = c.bytes_sent + c.bytes_recv
     last = memo.get("last")
-    memo["last"] = (total, now)
-    if not last or now <= last[1]:
+    memo["last"] = (c.bytes_sent, c.bytes_recv, now)
+    if not last or now <= last[2]:
         return {"value": 0.0, "text": "0B/s"}
-    bps = max(0.0, (total - last[0]) / (now - last[1]))
+    up, down = (max(0.0, (a - b) / (now - last[2])) for a, b in ((c.bytes_sent, last[0]), (c.bytes_recv, last[1])))
     # log scale: 10 KB/s reads 0, 10 MB/s reads 1
-    return {"value": _clamp((math.log10(max(bps, 1.0)) - 4) / 3), "text": _rate(bps)}
+    return {"value": _log(up + down, 1e4), "text": _rate(up + down),
+            "data": {"up": _log(up, 1e4), "down": _log(down, 1e4), "up_text": _rate(up), "down_text": _rate(down)}}
 
 
 def _disk(memo):
     import psutil
-    v = psutil.disk_usage(str(Path.home().anchor or "/")).percent
-    return {"value": v / 100, "text": f"{v:.0f}%"}
+    now = time.time()
+    if now - memo.get("at", 0) > 30:                             # how full it is changes slowly
+        memo["at"], memo["full"] = now, psutil.disk_usage(str(Path.home().anchor or "/")).percent
+    v, data = memo["full"], {}
+    try:
+        c = psutil.disk_io_counters()
+        last = memo.get("last")
+        memo["last"] = (c.read_bytes, c.write_bytes, now)
+        if last and now > last[2]:                               # log scale: 100 KB/s reads 0, 100 MB/s reads 1
+            rd, wr = (max(0.0, (a - b) / (now - last[2])) for a, b in ((c.read_bytes, last[0]), (c.write_bytes, last[1])))
+            data = {"read": _log(rd, 1e5), "write": _log(wr, 1e5), "read_text": _rate(rd), "write_text": _rate(wr)}
+    except Exception:                                            # noqa: BLE001  no counters on this system
+        pass
+    return {"value": v / 100, "text": f"{v:.0f}%", "data": data}
 
 
 def _battery(memo):
@@ -116,8 +224,14 @@ def _gpu(memo):
     if not memo.get("h"):
         pynvml.nvmlInit()
         memo["h"] = pynvml.nvmlDeviceGetHandleByIndex(0)
-    v = pynvml.nvmlDeviceGetUtilizationRates(memo["h"]).gpu
-    return {"value": v / 100, "text": f"{v}%"}
+    v, data = pynvml.nvmlDeviceGetUtilizationRates(memo["h"]).gpu, {}
+    try:
+        mem = pynvml.nvmlDeviceGetMemoryInfo(memo["h"])
+        data = {"vram": mem.used / mem.total, "vram_text": _rate(mem.used)[:-2],
+                "temp": pynvml.nvmlDeviceGetTemperature(memo["h"], pynvml.NVML_TEMPERATURE_GPU)}
+    except Exception:                                            # noqa: BLE001  extras never cost the reading
+        pass
+    return {"value": v / 100, "text": f"{v}%", "data": data}
 
 
 def _time_of_day(memo):
@@ -136,7 +250,7 @@ BUILTIN = {
     "ram": (_ram, 2, "RAM", "pressure, fullness: slow to change, good for weather or water level"),
     "gpu": (_gpu, 2, "GPU", "a second kind of effort (NVIDIA only; simulated elsewhere)"),
     "net": (_net, 1, "NET", "flow, traffic, chatter: jumpy, log scale from 10 KB/s to 10 MB/s"),
-    "disk": (_disk, 60, "DISK", "how full the system drive is: nearly static, good for terrain or sediment"),
+    "disk": (_disk, 1, "DISK", "how full the system drive is: nearly static, good for terrain or sediment"),
     "battery": (_battery, 30, "BATT", "energy left (None on a desktop)"),
     "time_of_day": (_time_of_day, 5, "TIME", "0 at midnight, 0.5 at noon: sun, moon, sky colour, opening hours"),
     "weekday": (_weekday, 600, "DAY", "0 Monday to 1 Sunday: weekly rhythm, weekend mood"),
@@ -151,6 +265,31 @@ def _sim(name: str, t: float) -> dict:
     v = 0.5 + 0.35 * math.sin(t / (7 + seed % 9) + seed) + 0.15 * math.sin(t / 1.7 + seed * 3)
     v = _clamp(v)
     return {"value": v, "text": f"{v * 100:.0f}%"}
+
+
+def _inside(name: str, v: float, t: float) -> dict | None:
+    """What a real reading carries in `data`, made up to fit a pinned or simulated value, so a preview
+    shows the same picture the PC would."""
+    def wave(period, phase=0.0):
+        return 0.5 + 0.5 * math.sin(t / period + phase)
+
+    def rate(x, low):
+        return _rate(low * 10 ** (3 * x))
+    if name == "cpu":
+        cores = [_clamp(v * (0.35 + 1.3 * ((i * 0.618) % 1.0)) + 0.05 * math.sin(t * 0.7 + i * 2.1)) for i in range(8)]
+        return {"cores": cores, "kernel": 0.2 + 0.1 * wave(13), "top_share": v * 0.55,
+                "top": ("compiler", "browser", "renderer", "indexer")[int(t / 40) % 4]}
+    if name == "ram":
+        return {"cache": (1 - v) * 0.6, "swap": max(0.0, v - 0.6) * 0.5, "used_text": f"{v * 32:.1f}G", "total_text": "32.0G"}
+    if name == "net":
+        up = _clamp(v * (0.35 + 0.3 * wave(5)))
+        return {"down": v, "up": up, "down_text": rate(v, 1e4), "up_text": rate(up, 1e4)}
+    if name == "disk":
+        rd, wr = _clamp(1.6 * wave(11) - 0.9), _clamp(1.6 * wave(17, 2.0) - 0.8)
+        return {"read": rd, "write": wr, "read_text": rate(rd, 1e5), "write_text": rate(wr, 1e5)}
+    if name == "gpu":
+        return {"vram": 0.25 + 0.6 * v, "vram_text": f"{2 + 4.8 * v:.1f}G", "temp": round(42 + 40 * v)}
+    return None
 
 
 class Hub:
@@ -267,6 +406,8 @@ class Hub:
         v = raw.get("value")
         v = None if v is None else _clamp(v)
         text = raw.get("text") or ("--" if v is None else f"{v * 100:.0f}%")
+        if raw.get("data") is None and v is not None and (not live or name in self._fixed):
+            raw = {**raw, "data": _inside(name, v, now)}         # a pinned or simulated number gets insides to match
         return Sig(name, v, str(text), label, raw.get("items"), live, raw.get("data")), period
 
     def _loop(self):

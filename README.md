@@ -42,8 +42,8 @@ by pane. Network is the traffic on the boulevard, the rings from the tower downt
 the searchlights. Disk is the container yard below, where a gantry crane sets a container down for
 every 5 %. The clock tower keeps the time, and the light, the sunlit side of every wall and the number
 of lit windows follow it. Pigeons leave the tower on the hour, and at night there are fireworks
-instead. A train crosses the viaduct, barges go down the river, and the big wheel and the airship are
-there because a city has them.
+instead. The big wheel is the graphics card and turns with its load. Barges go down the river and an
+airship crosses the sky because a city has them.
 
 The city also keeps time, because a five-second spike and a five-minute job show the same number.
 Quick things follow the reading: the furnace glow, the fans, the rings from the tower. Slow things
@@ -55,7 +55,8 @@ rainbow while the streets dry.
 
 ![The same view by day, with four minutes of smoke in the sky: a pale wisp far left from a spike, a band in the middle from a minute's work. The CPU has now been above 85 % for half a minute, so the chimneys flare, the cat turns its head and the view zooms in on the power plant: flames behind the furnace doors, roof fans spinning, a plate reading CPU 32s, 95 %. A tap returns to the wide view; a tap on the yard zooms in on the gantry crane as it sets a container down.](gallery/city-zoom.gif)
 
-A cat sits on the sill, and it is the one who notices things. When the CPU has stayed above 85 %, memory above 90 % or network above 80 % for half a minute (`patience`
+A cat sits on the sill, and it is the one who notices things. When the CPU has stayed above 85 %, memory
+or the graphics card above 90 % or network above 80 % for half a minute (`patience`
 in the page's options), when the hour strikes or the crane has a container to move, the cat turns its
 head and the view zooms in on what it is looking at. A plate shows the number and how long it has
 been that high. A zoom is the same picture
@@ -63,6 +64,31 @@ through a longer lens, so things show up that are too small to draw from far awa
 furnace doors, the marks on the sight glass, the second hand of the clock, the ribs on the containers.
 Tap a pane to zoom in on what you see in it, and tap again to come back. Left alone, the view visits
 one place a minute (`tour: 0` in the page's options keeps it still).
+
+### If you know what a kernel is
+
+Each of those places splits its number into what is inside it, for whoever looks longer.
+
+![The city by day. One furnace door of the plant burns while three stay dark, and the caption reads one thread flat out, 12 % in total. A tap zooms in: sixteen small flames, one tall, and a second plate naming the busiest program. Then every door burns, the right chimney steams white, an orange goods train crosses the viaduct and the traffic turns from mostly toward the window to mostly away. A tap on the water tank shows a dim hatched band above the water and a plate reading cache and swap.](gallery/city-inside.gif)
+
+| Look at | It tells you |
+|---|---|
+| The plant's furnace doors | The cores, a quarter of them behind each of four doors, busiest in the middle two, which are the ones the wide view shows. One hot door beside a dark one is one thread flat out, which the total calls "6 %" on sixteen cores. Up close every core has its own flame, as tall as the core is busy. |
+| The two chimneys | Brown smoke from the left one is time spent in programs. White steam from the right one is time spent in the kernel: drivers, disk and network handling. |
+| The band above the water | Memory the system holds as file cache and gives back when asked. Water plus band is what is occupied; water alone is what is needed. |
+| The amber tube beside the glass | How full the pagefile is. |
+| Cars on the boulevard | Driving toward you is download, driving away is upload. The tower's rings do the same: the right ones close in on the mast, the left ones spread out. |
+| The lamp post in the yard | Blinks blue for disk reads and orange for writes, faster for more. |
+| The goods train behind the roofs | Crosses while the disk is busy: longer for more MB/s, blue wagons for reads and orange for writes, running right when it mostly reads and left when it mostly writes. |
+| The arc inside the wheel's rim | The graphics card's memory in use. The hub goes from blue through yellow to red between 40 and 85 °C. |
+
+From the chair you can tell the doors, the smoke from the steam, the water and the wheel's arc. The
+lanes, the lamp and the tube want a closer look, and a close-up hangs a second plate with the numbers:
+the busiest program and its share, cache and swap, down and up, read and write, VRAM and temperature. The daemon reads all of it with
+[psutil](https://github.com/giampaolo/psutil) and, for an NVIDIA card,
+[pynvml](https://pypi.org/project/nvidia-ml-py/); on Windows the busiest program and the cache size
+come from one system call each, because asking every process in turn took two thirds of a second.
+A scene gets them as `s.cpu.data`, `s.ram.data` and so on ([the list](references/scene-card.md#signals)).
 
 Claude Haiku 5.5 wrote the first version of this city in under three minutes from one paragraph and
 a one-page manual. The [prompt, the file it wrote and what it cost](gallery/city/) are all here.

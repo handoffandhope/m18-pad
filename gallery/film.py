@@ -235,7 +235,7 @@ def city(t, film):
     tod = 0.729 + (22 / 24 - 0.729) * _ease(u / 3.5) + max(0.0, u - 3.5) / 86400
     cpu, net = 0.45 + 0.2 * math.sin(u * 0.9), 0.45 + 0.3 * abs(math.sin(u * 0.7))
     ram, disk = 0.68 - 0.24 * _ease((u - 1.5) / 2.0), 0.62
-    film.pin(time_of_day=tod, cpu=cpu, net=net, ram=ram, disk=disk)
+    film.pin(time_of_day=tod, cpu=cpu, net=net, ram=ram, disk=disk, gpu=0.3)
     if abs(t - 7.2) < 0.01:
         film.tap(8)
     return f"{int(tod * 24):02d}:{int(tod * 1440) % 60:02d}   CPU {cpu * 100:.0f}%   memory {ram * 100:.0f}%   network {net * 100:.0f}%"
@@ -250,12 +250,42 @@ def city_zoom(t, film):
     for start, end, level in ((-228, -223, 0.95), (-160, -100, 0.9), (-29.5, 4.8, 0.95)):
         cpu += (level - 0.25) * _ease((t - start) / 0.6) * (1 - _ease((t - end) / 1.0))
     disk = 0.62 if t < 6.2 else 0.66
-    film.pin(time_of_day=0.63 + t / 86400, cpu=cpu, net=0.55, ram=0.4, disk=disk)
+    film.pin(time_of_day=0.63 + t / 86400, cpu=cpu, net=0.55, ram=0.4, disk=disk, gpu=0.3)
     for when, key in ((5.0, 9), (6.4, 12), (11.8, 12)):
         if abs(t - when) < 0.01:
             film.tap(key)
     lasted = f" for {t + 29:.0f} s" if -29 < t < 5.3 else ""
     return f"CPU {cpu * 100:.0f}%{lasted}   disk {disk * 100:.0f}%"
+
+
+def _reading(v, text=None, **data):
+    return {"value": v, "text": text or f"{v * 100:.0f}%", "data": data}
+
+
+def city_inside(t, film):
+    """What is inside the numbers. One thread flat out is one furnace door of four and 12 % in total;
+    a tap on the plant shows a flame per core and names the program. Then every core is busy, half of
+    it in the kernel, the disk writes and the network sends: all the doors, white steam, an orange
+    train, cars driving away. A tap on the tank shows how much of the memory is cache."""
+    late = _ease((t - 6.6) / 1.2)
+    one = t < 6.6
+    cores = [1.0] + [0.0] * 7 if one else [0.9 + 0.08 * math.sin(t * 3 + i) for i in range(8)]
+    cpu = sum(cores) / 8
+    film.pin(time_of_day=0.42 + t / 86400,
+             cpu=_reading(cpu, cores=cores, kernel=0.08 if one else 0.45, top="compiler" if one else "renderer",
+                          top_share=0.12 if one else 0.7),
+             ram=_reading(0.5 + 0.08 * late, cache=0.34 - 0.1 * late, swap=0.3 * late, used_text="16.0G", total_text="32.0G"),
+             net=_reading(0.7, "1.3M/s", down=0.75 - 0.6 * late, up=0.1 + 0.65 * late,
+                          down_text="2.1M/s" if one else "40K/s", up_text="18K/s" if one else "1.6M/s"),
+             disk=_reading(0.62, read=0.5 if t < 1 else 0.0, write=0.0 if one else 0.75,
+                           read_text="3.2M/s" if t < 1 else "0B/s", write_text="0B/s" if one else "18M/s"),
+             gpu=_reading(0.2 + 0.6 * late, vram=0.3 + 0.5 * late, vram_text="2.4G" if one else "6.4G", temp=45 + 30 * late))
+    for when, key in ((2.4, 5), (5.8, 5), (10.0, 7), (13.4, 7)):
+        if abs(t - when) < 0.01:
+            film.tap(key)
+    if one:
+        return "one thread flat out: 12 % in total, one door of four"
+    return "all cores, half of it kernel; writing, uploading" if t < 10 else "memory: water is programs, the band is cache"
 
 
 def marbles(t, film):
@@ -273,6 +303,7 @@ CLIPS = {
     "night": lambda: record(ROOT / "gallery" / "night.gif", Film("fishbowl", FIX), night, 7, warm=25, width=720),
     "city": lambda: record(ROOT / "gallery" / "city.gif", Film("city"), city, 11, fps=10, warm=3, width=720),
     "zoom": lambda: record(ROOT / "gallery" / "city-zoom.gif", Film("city", {"tour": 0}), city_zoom, 13.5, fps=10, warm=240, width=720),
+    "inside": lambda: record(ROOT / "gallery" / "city-inside.gif", Film("city", {"tour": 0}), city_inside, 14.5, fps=10, warm=40, width=720),
 }
 
 if __name__ == "__main__":
