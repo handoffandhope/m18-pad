@@ -136,7 +136,9 @@ goes the other way, so with a fixed camera you can sit a ball exactly in the mid
 
 ## Two scenes to measure yours against
 
-Read one before you write. Your scene should hold up next to it in `--far`.
+Your scene should hold up next to these in `--far`. Before you write, read
+[city-study.md](city-study.md): it is one page, and shows what the city does in a scene of 75 lines
+you can run. The city itself is 1,100 lines, so search it for a name instead of reading it through.
 
 - [scenes/city.py](../scripts/m18/scenes/city.py): *the bars are a frame.* One view through a window,
   in perspective, nothing lined up with the keys. Every number has one big carrier (a 14 by 22 px

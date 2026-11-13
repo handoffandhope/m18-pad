@@ -48,7 +48,20 @@ one place a minute (page option `tour: 90` changes the pause, `tour: 0` stops it
 
 A zoom is the same picture through a longer lens, so every place is drawn once in the wide picture's
 own pixels and a View scales it. What stands still is drawn once per place and per five minutes of
-daylight, in three layers (sky, far city, near city) so the train can run between them."""
+daylight, in three layers (sky, far city, near city) so the train can run between them.
+
+Where things are, top to bottom. The file is long; search for the name instead of reading it through.
+
+    View, Light   the lens (world point to pixel) and the hour's colours
+    setup         the district, laid out once
+    inside, more  what is inside each number, and the second plate's rows
+    layers        the three still layers; boxer and paint draw the buildings on them
+    remember      how long each number has stayed over its line
+    camera        where the lens is and why: the cat's alarms, the hour, the tour, a tap
+    crane         the yard's crane and its queue
+    draw          one frame, in sections headed "# ---- sky", "far city", "near city", "net:",
+                  "ram:", "time_of_day:", "cpu:", "disk:", "a zoom smears", "this side of the glass"
+    cat, tap      the cat on the sill; a tap picks the pane's place"""
 import math
 import random
 
@@ -306,7 +319,7 @@ def paint(d, v, L, box, item):
         for lx0, lx1, lz0, lz1, h, col, seed in lots:
             box(lx0, lx1, lz0, lz1, h, col, seed)
     elif kind == "lots":
-        box(x0 + 1, x0 + BLOCK - 1, z0 + 1, z0 + BLOCK - 1, max(l[4] for l in lots) * 0.8, lots[0][5], lots[0][6])
+        box(x0 + 1, x0 + BLOCK - 1, z0 + 1, z0 + BLOCK - 1, max(lot[4] for lot in lots) * 0.8, lots[0][5], lots[0][6])
     elif kind == "rail":                                        # the railway viaduct along the river
         col = L.sh("#b9a58c", RAIL)
         for x in range(-700, 700, 30):
@@ -1023,17 +1036,17 @@ def draw(im, d, s, t, state):
         if over >= 10:
             rows = [(sig.label, 12, "#aab3d6"), (value, min(fit, 23 if len(value) <= 3 else 20 if len(value) == 4 else 19), "#ffffff"),
                     (f"{int(over)}s" if over < 60 else f"{int(over // 60)}m{int(over % 60):02d}s", 15, "#ffc46b")]
-        for key, rows, edge in ((PLATE[shot], rows, "#ffc46b"), (MORE.get(shot), more(shot, s, ins), "#7d8fc4")):
-            if not (key and rows):
+        for key, lines, edge in ((PLATE[shot], rows, "#ffc46b"), (MORE.get(shot), more(shot, s, ins), "#7d8fc4")):
+            if not (key and lines):
                 continue
             x0, y0, _, _ = key_box(key)
             if grow < 0.5:                                      # it opens from a line
                 d.line((x0 + 4, y0 + 32, x0 + 59, y0 + 32), fill=edge, width=3)
                 continue
             d.rounded_rectangle((x0 + 1, y0 + 1, x0 + 62, y0 + 62), 7, fill="#0a0c18", outline=edge, width=2)   # the whole pane: it reads from the chair
-            gap = (60 - sum(size for _, size, _ in rows)) / (len(rows) + 1)
+            gap = (60 - sum(size for _, size, _ in lines)) / (len(lines) + 1)
             y = y0 + 2 + gap
-            for txt, size, col in rows:
+            for txt, size, col in lines:
                 text(d, (x0 + 32, y + size / 2), txt, size, col)
                 y += size + gap
     d.rectangle((0, H - 9, W, H), fill=mix("#4a342a", DARK, 0.3 + 0.4 * L.night))
